@@ -108,6 +108,9 @@ services:
       #- /etc/timezone:/etc/timezone:ro # Do not use https://github.com/wekan/wekan/issues/5123
 
   wekan:
+    #extra_hosts:
+    #  # https://github.com/wekan/wekan/wiki/Troubleshooting-Mail#postfix
+    #  - "mailserver:192.168.1.10"
     #-------------------------------------------------------------------------------------
     # ==== WEKAN FROM GITHUB/QUAY/DOCKER HUB ====
     # All of GitHub, Quay and Docker Hub have latest, but because
@@ -146,11 +149,12 @@ services:
     #  dockerfile: Dockerfile
     #-------------------------------------------------------------------------------------
     ports:
-      # Docker outsideport:insideport. Do not add anything extra here.
-      # For example, if you want to have wekan on port 3001,
-      # use 3001:8080 . Do not add any extra address etc here, that way it does not work.
-      # remove port mapping if you use nginx reverse proxy, port 8080 is already exposed to wekan-tier network
-      - 80:8080
+      - 3001:8080
+    #  # Docker outsideport:insideport. Do not add anything extra here.
+    #  # For example, if you want to have wekan on port 3001,
+    #  # use 3001:8080 . Do not add any extra address etc here, that way it does not work.
+    #  # remove port mapping if you use nginx reverse proxy, port 8080 is already exposed to wekan-tier network
+    #  - 80:8080
     environment:
       #-----------------------------------------------------------------
       # ==== WRITEABLE PATH FOR FILE UPLOADS ====
@@ -178,7 +182,8 @@ services:
       #  - http://example.com
       #  - http://boards.example.com
       #  - http://192.168.1.100    <=== using at local LAN
-      - ROOT_URL=http://localhost  #   <=== using only at same laptop/desktop where Wekan is installed
+      #- ROOT_URL=http://localhost  #   <=== using only at same laptop/desktop where Wekan is installed
+      - ROOT_URL=https://wekan.twentyfoursoftware.co.uk  #   <=== using only at same laptop/desktop where Wekan is installed
       #---------------------------------------------------------------
       # ==== EMAIL SETTINGS ====
       # Email settings are only at MAIL_URL and MAIL_FROM.
@@ -188,8 +193,9 @@ services:
       # NOTE: Special characters need to be url-encoded in MAIL_URL.
       #       You can encode those characters for example at: https://www.urlencoder.org
       #- MAIL_URL=smtp://user:pass@mailserver.example.com:25/
-      - MAIL_URL=smtp://<mail_url>:25/?ignoreTLS=true&tls={rejectUnauthorized:false}
-      - MAIL_FROM=Wekan Notifications <noreply.wekan@mydomain.com>
+      #- MAIL_URL=smtp://<here>:25/?ignoreTLS=true&tls={rejectUnauthorized:false}
+      - MAIL_URL=smtps://mrlemon@purelymail.com:ymmgksaxlmuhhdjisodw@smtp.purelymail.com:465/?ignoreTLS=true&tls={rejectUnauthorized:false}&secure=false
+      - MAIL_FROM=Wekan Boards <mrlemon@purelymail.com>
       # Currently MAIL_SERVICE is not in use.
       #- MAIL_SERVICE=Outlook365
       #- MAIL_SERVICE_USER=firstname.lastname@hotmail.com
