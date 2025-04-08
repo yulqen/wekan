@@ -15,6 +15,119 @@ Fixing other platforms In Progress.
 
 [How to upgrade WeKan](https://github.com/wekan/wekan/issues/4585)
 
+# Upcoming WeKan ® release
+
+This release adds the following updates:
+
+- Updated Browser compatibility matrix, adding Iris browser at RISC OS Direct, and fixing links.
+  [Part1](https://github.com/wekan/wekan/commit/db5346fc5c7407160f381c0fcf4a87204206ed55),
+  [Part2](https://github.com/wekan/wekan/commit/05d1736f5f21e93e83b2e25029c6cab6c5106398).
+  Thanks to xet7.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.84 2025-03-23 WeKan ® release
+
+This release adds the following new features:
+
+- [Time on minicard for Start/End/Due Date](https://github.com/wekan/wekan/pull/5712).
+  Thanks to Rayene123.
+
+and adds the following updates:
+
+- [Added developer docs about Login code](https://github.com/wekan/wekan/commit/c0e4e01deb936653df69b4fd21598ac27cd349a0).
+  Thanks to xet7.
+- Updated dependencies.
+  [Part 1](https://github.com/wekan/wekan/pull/5718),
+  [Part 2](https://github.com/wekan/wekan/commit/bb6ac70f63b6f3568b7c943417c698615936a956).
+  Thanks to developers of dependencies.
+
+and fixes the following bugs:
+
+- [Fixed typo at Shortcuts, now became visible translations of assignees visibility 1-9 shortcuts](https://github.com/wekan/wekan/commit/4510ddda1507bc775b9523d3673adba48d7a8385).
+  Thanks to xet7.
+- [Fixed building OpenAPI docs](https://github.com/wekan/wekan/commit/a2911bc9c3bd94ef583388931d2cd354cc8657e3).
+  Thanks to xet7.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.83 2025-03-08 WeKan ® release
+
+This release adds the following updates:
+
+- [Adding Development information to readme](https://github.com/wekan/wekan/pull/5702).
+  Thanks to adam-fu.
+- Updated GitHub actions.
+  [Part 1](https://github.com/wekan/wekan/pull/5703),
+  [Part 2](https://github.com/wekan/wekan/pull/5704).
+
+and fixes the following bugs:
+
+- [Removed siteurl from manifest to fix browser console error about not matching URL](https://github.com/wekan/wekan/commit/b402676079517e463ed291285f69c04126a00975).
+  Thanks to xet7.
+- [Exception while invoking method 'copyCard' TypeError: Cannot read property 'name' of undefined](https://github.com/wekan/wekan/pull/5711).
+  Thanks to Firas-Git.
+- [Comment out error message of non-existing Custom Field](https://github.com/wekan/wekan/commit/908a5fc60d5d574a36d4bfd496d3a16fd267ae75).
+  Thanks to xet7.
+- [Reverted Docker changes of WeKan v7.68 to get WeKan Docker version working](https://github.com/wekan/wekan/commit/e7462ada12ec8edfd08d6c3b3a97a034211d51eb).
+  Thanks to xet7.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.82 2025-02-24 WeKan ® release
+
+v7.82 Docker version is broken: https://github.com/wekan/wekan/issues/5697 . Snap Candidate works.
+
+This release adds the following new features:
+
+- [Add possibility to use a token in place of ipaddress to access metrics route](https://github.com/wekan/wekan/pull/5682).
+  Thanks to salleman33.
+
+and adds the following updates:
+
+- [Updated dependencies](https://github.com/wekan/wekan/pull/5691).
+  Thanks to dependabot.
+- [Updated requirements at docs](https://github.com/wekan/wekan/commit/148b81262d0d143460e881d645fefa6740aae40d).
+  Thanks to mueller-ma.
+- [Updated dependencies](https://github.com/wekan/wekan/commit/666ee8403388f7d5e1a30cf0e53bc46a70bf1c40).
+  Thanks to developes of dependencies.
+- [Fixed building WeKan. Updated dompurify. Forked Meteor 2.14 version of meteor-node-stubs to update elliptic](https://github.com/wekan/wekan/commit/18d0fa43275cd2955dd6416213e316ca08a62255).
+  Thanks to developers of depedencies and xet7.
+
+and fixes the following bugs:
+
+- [Added missing ) character](https://github.com/wekan/wekan/commit/563a508e269be87eb713e2888409525e1ba82001).
+  Thanks to xet7.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.81 2025-02-07 WeKan ® release
+
+This release adds the following new features:
+
+- [Helm Chart: Added secretManaged value for enabling or disabling the creation of secret by Helm](https://github.com/wekan/charts/pull/39).
+  Thanks to salleman33.
+
+and adds the following updates:
+
+- [Updated Docker Actions](https://github.com/wekan/wekan/pull/5670).
+  Thanks to dependabot.
+- [Added Meteor 3.1 learning course to docs](https://github.com/wekan/wekan/commit/0c7e12c5e7f322bdbaaa61100e66153dd0b92e4d).
+  Thanks to producer of learning course.
+- [Upgraded to MongoDB 6.0.20 at Snap Candidate](https://github.com/wekan/wekan/commit/b571f1c9530b899db75bf28a03c18277a9b77cb8).
+  Thanks to MongoDB developers.
+
+and fixes the following bugs:
+
+- [Fixed env variable METRICS_ACCEPTED_IP_ADDRESS to be same as at docs](https://github.com/wekan/wekan/commit/0b1e0bd39569175668c195b63dde91bf0e6f1b24).
+  Thanks to salleman33.
+- [Fixed misspelling of hours at env variable setting LDAP_BACKGROUND_SYNC_INTERVAL](https://github.com/wekan/wekan/commit/36a307785369337a788499065f64175971878930).
+  Thanks to hubermam.
+- [Helm Chart: Restore pod security context in deployment](https://github.com/wekan/charts/pull/40).
+  Thanks to adalinesimonian.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
 # v7.80 2025-01-12 WeKan ® release
 
 This release fixes the following bugs:
