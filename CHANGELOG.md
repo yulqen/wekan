@@ -19,10 +19,137 @@ Fixing other platforms In Progress.
 
 This release adds the following updates:
 
+- [Updated Docker build push action](https://github.com/wekan/wekan/pull/5795).
+  Thanks to dependabot.
+
+and fixes the following bugs:
+
+- [Allow selection of card text via webkit/user-select attributes](https://github.com/wekan/wekan/pull/5793).
+  Thanks to walster001.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.91 2025-05-25 WeKan ® release
+
+This release adds the following updates:
+
+- [Updated Docker build push action](https://github.com/wekan/wekan/pull/5780).
+  Thanks to dependabot.
+
+and fixes the following bugs:
+
+- Reverted due date fixes.
+  [Part 1](https://github.com/wekan/wekan/commit/1979b1692dcaf6fd909cabfb894635f1e6a66fa8),
+  [Part 2](https://github.com/wekan/wekan/commit/aaa5f9885d37a369606e61a759af37f444ec606d).
+  Thanks to xet7.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.90 2025-05-14 WeKan ® release
+
+This release fixes the following bugs:
+
+- [Fix Due Date Problem in Non-English Numbers](https://github.com/wekan/wekan/pull/5774).
+  Thanks to valhalla-creator.
+- [Added missing quotes to Fix Due Date Problem in Non-English Numbers](https://github.com/wekan/wekan/commit/c0a9780f803ed445a93a274d13504a8f245c1885).
+  Thanks to xet7.
+- [Changed start.bat default ROOT_URL=http://localhost , although it only works for local user](https://github.com/wekan/wekan/commit/e52158b729c8ba39a55fe52e38fd6b134b42548e).
+  Thanks to xet7.
+- [Fix Lines in multiline markdown code block to not anymore have darker background](https://github.com/wekan/wekan/commit/b82ba63532b32ec3a0c860a380648cef6739db0f).
+  Thanks to mueller-ma and xet7.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.89 2025-05-13 WeKan ® release
+
+Note: Docker image is only at ghcr.io (GitHub) and Docker Hub (wekanteam/wekan).
+Quay.io is at read only mode, they are fixing something, so it's not possible to
+push Docker image yet to quay.io .
+
+This release adds the following new features:
+
+- [Add email notifications language localization feature](https://github.com/wekan/wekan/pull/5769).
+  Thanks to Adamsss001.
+
+and adds the following updates:
+
+- [Added script to build snap locally and push to snapcraft.io candidate and edge](https://github.com/wekan/wekan/commit/072ced9d0e53dc6c8964e9b37fc7d1036962ca19).
+  Thanks to xet7.
+- [Updated Browser Compatibility Matrix by adding Servo](https://github.com/wekan/wekan/commit/394f2eae69542067fde9e2511ffcef165d170d2d).
+  Thanks to xet7.
+- [Updated Caddy docs](https://github.com/wekan/wekan/commit/9aa12b0eb62962bd107fe1aa87cdf5bad5a5905f).
+  Thanks to xet7.
+- [Upgraded to MongoDB 6.0.23 at Snap Candidate](https://github.com/wekan/wekan/commit/0bd410866196bc2faa76b9c26c12f42617321a03).
+  Thanks to MongoDB developers.
+
+and fixes the following bugs:
+
+- [Fix list insertion order and prevent runtime error in "Add After" feature](https://github.com/wekan/wekan/pull/5767).
+  Thanks to valhalla-creator.
+- [Add missing code of fix insertion order of list](https://github.com/wekan/wekan/commit/7d1a1475baefb3fd20da3df835c349a62b425041).
+  Thanks to xet7.
+- [Fix: Add CSS vendor prefixes for user-select and text-size-adjust for better browser compatibility](https://github.com/wekan/wekan/pull/5772).
+  Thanks to oussama-madimagh.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.88 2025-04-25 WeKan ® release
+
+This release fixes the following bugs:
+
+- [Reverted translation fix that sometimes did not work](https://github.com/wekan/wekan/commit/c825895cebd24355d076741512c9aa16844393d9).
+  Thanks to xet7.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.87 2025-04-25 WeKan ® release
+
+Note: This release does not work, there is bugs. Use newest release.
+
+This release fixes the following bugs:
+
+- [Fix typos](https://github.com/wekan/wekan/commit/d0ea5bf50067fd76359330986edbad8dd1fbcdcc).
+  Thanks to xet7.
+- [Fix more contrasting issues](https://github.com/wekan/wekan/pull/5750).
+  Thanks to walster001.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.86 2025-04-25 WeKan ® release
+
+Note: This release does not work, there is typos. Use newest release.
+
+This release adds the following updates:
+
+- [Improve impersonate user documentation in docs/Admin/Impersonate-user.md](https://github.com/wekan/wekan/pull/5746).
+  Thanks to nourguidara.
+
+and fixes the following bugs:
+
+- [Add toggle watch icon on card. Add questions are you sure to duplicate board and archive board](https://github.com/wekan/wekan/pull/5745).
+  Thanks to Rayene123.
+- [Fix translations not working](https://github.com/wekan/wekan/pull/5748).
+  Thanks to nourguidara.
+- [Fix contrast issue checkbox at Exodark theme](https://github.com/wekan/wekan/pull/5749).
+  Thanks to walster001.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.85 2025-04-21 WeKan ® release
+
+This release adds the following updates:
+
 - Updated Browser compatibility matrix, adding Iris browser at RISC OS Direct, and fixing links.
   [Part1](https://github.com/wekan/wekan/commit/db5346fc5c7407160f381c0fcf4a87204206ed55),
   [Part2](https://github.com/wekan/wekan/commit/05d1736f5f21e93e83b2e25029c6cab6c5106398).
   Thanks to xet7.
+- [Updated to MongoDB 6.0.22](https://github.com/wekan/wekan/commit/c1a4250bd2e26be5549704234a3cfb5306120352).
+  Thanks to MongoDB developers.
+
+and fixes the following bugs:
+
+- [Fix board sidebar menu doesn't open in mobile](https://github.com/wekan/wekan/commit/01950cc796697fa201ac9e4376cb204d308e8181).
+  Thanks to mimZD and xet7.
 
 Thanks to above GitHub users for their contributions and translators for their translations.
 

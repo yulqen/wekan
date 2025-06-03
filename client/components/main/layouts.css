@@ -59,8 +59,12 @@ button {
 html {
   font-size: 100%;
   max-height: 100%;
-  user-select: none;
+  -webkit-user-select: text;
+  user-select: text;
+
   -webkit-text-size-adjust: 100%;
+text-size-adjust: 100%;
+
 }
 body {
   background: #dedede;
@@ -188,7 +192,10 @@ strong {
   font-weight: bold;
 }
 p {
+  -webkit-user-select: text;
   user-select: text;
+ 
+
 }
 p a {
   text-decoration: underline;
@@ -207,7 +214,7 @@ pre,
 code,
 tt {
   font-family: lucida console, monospace;
-  line-height: 1.25em;
+  line-height: 1.3em;
 }
 blockquote {
   margin: 8px 0 8px 8px;
@@ -431,7 +438,8 @@ a:not(.disabled).is-active i.fa {
 .viewer em {
   font-style: italic;
 }
-.viewer pre {
+.viewer pre,
+.viewer code {
   padding: 10px 12px 7px;
   background: #dedede;
   overflow-y: auto;
