@@ -10,19 +10,19 @@ This is without container (without Docker or Snap).
 
 Right click and download files 1-4:
 
-1. [wekan-7.91-amd64-windows.zip](https://github.com/wekan/wekan/releases/download/v7.91/wekan-7.91-amd64-windows.zip)
+1. [wekan-7.92-amd64-windows.zip](https://github.com/wekan/wekan/releases/download/v7.92/wekan-7.92-amd64-windows.zip)
 
 2. [node.exe](https://nodejs.org/dist/latest-v14.x/win-x64/node.exe)
 
-3. [mongodb-windows-x86_64-6.0.23-signed.msi](https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.23-signed.msi)
+3. [mongodb-windows-x86_64-7.0.21-signed.msi](https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-7.0.21-signed.msi)
 
 4. [start-wekan.bat](https://raw.githubusercontent.com/wekan/wekan/main/start-wekan.bat)
 
 5. Copy files from steps 1-4 with USB stick or DVD to offline Windows computer
 
-6. Double click `mongodb-windows-x86_64-6.0.23-signed.msi` . In installer, uncheck downloading MongoDB compass.
+6. Double click `mongodb-windows-x86_64-7.0.21-signed.msi` . In installer, uncheck downloading MongoDB compass.
 
-7. Unzip `wekan-7.91-amd64-windows.zip` , inside it is directory `bundle`, to it copy other files:
+7. Unzip `wekan-7.92-amd64-windows.zip` , inside it is directory `bundle`, to it copy other files:
 
 ```
 bundle (directory)
@@ -98,9 +98,9 @@ Backup will be is in directory `dump`. More info at https://github.com/wekan/wek
 
 2.2. Backup part 2/2. If there is files at `WRITABLE_PATH` directory mentioned at `start-wekan.bat` of https://github.com/wekan/wekan , also backup those. For example, if there is `WRITABLE_PATH=..`, it means previous directory. So when WeKan is started with `node main.js` in bundle directory, it may create in previous directory (where is bundle) directory `files`, where is subdirectories like `files\attachments`, `files\avatars` or similar. 
 
-2.3. Check required compatible version of Node.js from https://wekan.github.io `Install WeKan ® Server` section and Download that version node.exe for Windows 64bit from https://nodejs.org/dist/
+2.3. Check required compatible version of Node.js from https://wekan.fi `Install WeKan ® Server` section and Download that version node.exe for Windows 64bit from https://nodejs.org/dist/
 
-2.4. Check required compatible version of MongoDB from https://wekan.github.io `Install WeKan ® Server` section and Download that version Windows MongoDB .msi installer from https://www.mongodb.com/try/download/community
+2.4. Check required compatible version of MongoDB from https://wekan.fi `Install WeKan ® Server` section and Download that version Windows MongoDB .msi installer from https://www.mongodb.com/try/download/community
 
 2.5. Remove old Node.js and MongoDB (at Windows, Control Panel / Add Remove Programs).
 

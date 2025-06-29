@@ -17,15 +17,80 @@ Fixing other platforms In Progress.
 
 # Upcoming WeKan ® release
 
+This release adds the following new features:
+
+- [Enhance API documentation and add board-related endpoints](https://github.com/wekan/wekan/pull/5815).
+  Thanks to Atry.
+- Snap Candidate: If CPU does not support AVX, use Qemu that supports AVX, so that MongoDB 6 works.
+  [Part 1](https://github.com/wekan/migratemongo/commit/e7ca69584f021c4de16062f7074f177cca7ab25c),
+  [Part 2](https://github.com/wekan/migratemongo/commit/e34efeeced9e293ff6ea12bf36486eab3ce3a3f5),
+  [Part 3](https://github.com/wekan/wekan/commit/59ab6c1cd8ca3d71616201b02de6536b15b2303d).
+  Thanks to xet7.
+- [Added docs about using MongoDB at unsupported CPUs with Qemu](https://github.com/wekan/wekan/commit/f926448bbbbd570ad1e6a1015c755b12c6b229c0).
+  Thanks to xet7.
+
+and adds the following updates:
+
+- Updated docs.
+  [Part 1](https://github.com/wekan/wekan/commit/31e043c1d7c0d4031054234241f6a1b7479f2134),
+  [Part 2](https://github.com/wekan/wekan/commit/40a52da2d3fd472847b9bfd2696f3f9a72021b52),
+  [Part 3](https://github.com/wekan/wekan/commit/2a415cbd2661bd210fdd18626f1e606f73334bd2),
+  [Part 4](https://github.com/wekan/wekan/commit/d99864ca95a46e5121962c37fd0acd0f6ad16193),
+  [Part 5](https://github.com/wekan/wekan/commit/3a4d20ecb27f02297d0e4e479fcb5d3335ece962),
+  [Part 6](https://github.com/wekan/wekan/commit/31e043c1d7c0d4031054234241f6a1b7479f2134),
+  [Part 7](https://github.com/wekan/wekan/commit/9aa028f32dc7c186d55ada422b73a7e331de2cbb),
+  [Part 8](https://github.com/wekan/wekan/commit/11415cd51781bde20375c6d98fccde17227136fd),
+  [Part 9](https://github.com/wekan/wekan/commit/cc7459b98395f15fd2c97992f74c279a93f8956a),
+  [Part 10](https://github.com/wekan/wekan/commit/4bfc0140bef8504ba24b237a9c5c525a5bf3fb7d),
+  [Part 11](https://github.com/wekan/wekan/commit/f54cbac37008fc99f19fb20930d2fa5ecb535a69),
+  [Part 12](https://github.com/wekan/wekan/commit/ad3306e19e422b9b8ce70a13e862bc107fec1eba),
+  [Part 13](https://github.com/wekan/wekan/commit/7841c9e801c737aab07e9bd68f8d84f9e4becc3e),
+  [Part 14](https://github.com/wekan/wekan/commit/be1b9595196e2072ec2259de9b81bc3b823722eb),
+  [Part 15](https://github.com/wekan/wekan/commit/12e6e469249c9392181df20f51bcc684e2656960).
+- [Updated dependencies](https://github.com/wekan/wekan/commit/e6980be061a6ab54d592cd86f1079a7672a3e081).
+  Thanks to developers of dependencies.
+- [Upgraded Snap Candidate to have base core24, MongoDB 7 and Caddy 2](https://github.com/wekan/wekan/commit/6526d99123b047fe4dfcf8f60a23f65d1261324c).
+  Thanks to xet7.
+- [Removed old broken snap files](https://github.com/wekan/wekan/commit/b7409c1d0b574b77f0fa95f7289d815671c1e224).
+  Thanks to xet7.
+
+and fixes the following bugs:
+
+- [CleanDark Theme Fixes](https://github.com/wekan/wekan/pull/5805).
+  Thanks to walster001.
+- Specify meteor version, otherwise the latest meteor version is not compatible with node14.
+  [Part 1](https://github.com/wekan/wekan/pull/5816),
+  [Part 2](https://github.com/wekan/wekan/commit/51e43f1c254abee7ee12e8fdab8c52695e858fa2).
+  Thanks to dassio and xet7.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
+# v7.92 2025-06-12 WeKan ® release
+
 This release adds the following updates:
 
 - [Updated Docker build push action](https://github.com/wekan/wekan/pull/5795).
   Thanks to dependabot.
+- [Updated to MongoDB 6.0.24 at Snap Candidate](https://github.com/wekan/wekan/commit/6905e24199186274f37d8bbdfac313f957fdd54f).
+  Thanks to MongoDB developers.
+- Updated dependencies.
+  [Part 1](https://github.com/wekan/wekan/commit/7115c292c7066d8d00778fa738bb11c2db467895),
+  [Part 2](https://github.com/wekan/wekan/commit/1f10c208744ec45e062db08a179b6e9a3b1bcd2e).
+  Thanks to developers of dependencies.
+- [Upgrade to MongoDB 7.0.21](https://github.com/wekan/wekan/commit/d2f17ef1402335e4b3bd9de8864c68f97714febf).
+  Thanks to MongoDB developers.
+- [Snap Candidate back to MongoDB 6.0.24, because 7.0.21 did not work](https://github.com/wekan/wekan/commit/985afafed0eb608fb95d4e54f846836b1fb0e800).
+  Thanks to xet7.
+
 
 and fixes the following bugs:
 
 - [Allow selection of card text via webkit/user-select attributes](https://github.com/wekan/wekan/pull/5793).
   Thanks to walster001.
+- [Helm Chart: Fix: quote host names](https://github.com/wekan/charts/pull/41).
+  Thanks to Atry.
+- [Fix: properly document /users/login API](https://github.com/wekan/wekan/pull/5801).
+  Thanks to Atry.
 
 Thanks to above GitHub users for their contributions and translators for their translations.
 
