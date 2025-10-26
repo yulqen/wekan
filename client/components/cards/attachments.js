@@ -1,6 +1,9 @@
 import { ReactiveCache } from '/imports/reactiveCache';
 import { ObjectID } from 'bson';
 import DOMPurify from 'dompurify';
+import { sanitizeHTML, sanitizeText } from '/imports/lib/secureDOMPurify';
+import uploadProgressManager from '../../lib/uploadProgressManager';
+import { attachmentMigrationManager } from '/client/lib/attachmentMigrationManager';
 
 const filesize = require('filesize');
 const prettyMilliseconds = require('pretty-ms');
@@ -268,7 +271,7 @@ Template.attachmentGallery.helpers({
     return ret;
   },
   sanitize(value) {
-    return DOMPurify.sanitize(value);
+    return sanitizeHTML(value);
   },
 });
 
@@ -296,43 +299,12 @@ Template.cardAttachmentsPopup.events({
     const files = event.currentTarget.files;
     if (files) {
       let uploads = [];
-      for (const file of files) {
-        const fileId = new ObjectID().toString();
-        let fileName = DOMPurify.sanitize(file.name);
+      const uploaders = handleFileUpload(card, files);
 
-        // If sanitized filename is not same as original filename,
-        // it could be XSS that is already fixed with sanitize,
-        // or just normal mistake, so it is not a problem.
-        // That is why here is no warning.
-        if (fileName !== file.name) {
-          // If filename is empty, only in that case add some filename
-          if (fileName.length === 0) {
-            fileName = 'Empty-filename-after-sanitize.txt';
-          }
-        }
-
-        const config = {
-          file: file,
-          fileId: fileId,
-          fileName: fileName,
-          meta: Utils.getCommonAttachmentMetaFrom(card),
-          chunkSize: 'dynamic',
-        };
-        config.meta.fileId = fileId;
-        const uploader = Attachments.insert(
-          config,
-          false,
-        );
+      uploaders.forEach(uploader => {
         uploader.on('start', function() {
           uploads.push(this);
           templateInstance.uploads.set(uploads);
-        });
-        uploader.on('uploaded', (error, fileRef) => {
-          if (!error) {
-            if (fileRef.isImage) {
-              card.setCover(fileRef._id);
-            }
-          }
         });
         uploader.on('end', (error, fileRef) => {
           uploads = uploads.filter(_upload => _upload.config.fileId != fileRef._id);
@@ -341,8 +313,7 @@ Template.cardAttachmentsPopup.events({
             Popup.back();
           }
         });
-        uploader.start();
-      }
+      });
     }
   },
   'click .js-computer-upload'(event, templateInstance) {
@@ -355,6 +326,105 @@ Template.cardAttachmentsPopup.events({
 const MAX_IMAGE_PIXEL = Utils.MAX_IMAGE_PIXEL;
 const COMPRESS_RATIO = Utils.IMAGE_COMPRESS_RATIO;
 let pastedResults = null;
+
+// Shared upload logic for drag-and-drop functionality
+export function handleFileUpload(card, files) {
+  if (!files || files.length === 0) {
+    return [];
+  }
+
+  // Check if board allows attachments
+  const board = card.board();
+  if (!board || !board.allowsAttachments) {
+    if (process.env.DEBUG === 'true') {
+      console.warn('Attachments not allowed on this board');
+    }
+    return [];
+  }
+
+  // Check if user can modify the card
+  if (!Utils.canModifyCard()) {
+    if (process.env.DEBUG === 'true') {
+      console.warn('User does not have permission to modify this card');
+    }
+    return [];
+  }
+
+  const uploads = [];
+
+  for (const file of files) {
+    // Basic file validation
+    if (!file || !file.name) {
+      if (process.env.DEBUG === 'true') {
+        console.warn('Invalid file object');
+      }
+      continue;
+    }
+
+    const fileId = new ObjectID().toString();
+    let fileName = sanitizeText(file.name);
+
+    // If sanitized filename is not same as original filename,
+    // it could be XSS that is already fixed with sanitize,
+    // or just normal mistake, so it is not a problem.
+    // That is why here is no warning.
+    if (fileName !== file.name) {
+      // If filename is empty, only in that case add some filename
+      if (fileName.length === 0) {
+        fileName = 'Empty-filename-after-sanitize.txt';
+      }
+    }
+
+    const config = {
+      file: file,
+      fileId: fileId,
+      fileName: fileName,
+      meta: Utils.getCommonAttachmentMetaFrom(card),
+      chunkSize: 'dynamic',
+    };
+    config.meta.fileId = fileId;
+
+    try {
+      const uploader = Attachments.insert(
+        config,
+        false,
+      );
+
+      // Add to progress manager for tracking
+      const uploadId = uploadProgressManager.addUpload(card._id, uploader, file);
+
+      uploader.on('uploaded', (error, fileRef) => {
+        if (!error) {
+          if (fileRef.isImage) {
+            card.setCover(fileRef._id);
+            if (process.env.DEBUG === 'true') {
+              console.log(`Set cover image for card ${card._id}: ${fileRef.name}`);
+            }
+          }
+        } else {
+          if (process.env.DEBUG === 'true') {
+            console.error('Upload error:', error);
+          }
+        }
+      });
+
+      uploader.on('error', (error) => {
+        if (process.env.DEBUG === 'true') {
+          console.error('Upload error:', error);
+        }
+      });
+
+      uploads.push(uploader);
+      uploader.start();
+    } catch (error) {
+      if (process.env.DEBUG === 'true') {
+        console.error('Failed to create uploader:', error);
+      }
+    }
+  }
+
+  return uploads;
+}
 
 Template.previewClipboardImagePopup.onRendered(() => {
   // we can paste image from clipboard
@@ -498,7 +568,7 @@ BlazeComponent.extendComponent({
           const name = this.$('.js-edit-attachment-name')[0]
             .value
             .trim() + this.data().extensionWithDot;
-          if (name === DOMPurify.sanitize(name)) {
+          if (name === sanitizeText(name)) {
             Meteor.call('renameAttachment', this.data()._id, name);
           }
           Popup.back();
@@ -507,3 +577,20 @@ BlazeComponent.extendComponent({
     ]
   }
 }).register('attachmentRenamePopup');
+
+// Template helpers for attachment migration status
+Template.registerHelper('attachmentMigrationStatus', function(attachmentId) {
+  return attachmentMigrationManager.getAttachmentMigrationStatus(attachmentId);
+});
+
+Template.registerHelper('isAttachmentMigrating', function(attachmentId) {
+  return attachmentMigrationManager.isAttachmentBeingMigrated(attachmentId);
+});
+
+Template.registerHelper('attachmentMigrationProgress', function() {
+  return attachmentMigrationManager.attachmentMigrationProgress.get();
+});
+
+Template.registerHelper('attachmentMigrationStatusText', function() {
+  return attachmentMigrationManager.attachmentMigrationStatus.get();
+});

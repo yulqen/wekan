@@ -4,6 +4,7 @@ template(name="swimlane")
   unless collapseSwimlane
     .swimlane.js-lists.js-swimlane.dragscroll(id="swimlane-{{_id}}"
                                    style="height:{{swimlaneHeight}};")
+      .swimlane-resize-handle.js-swimlane-resize-handle.nodragscroll
       if isMiniScreen
         if currentListIsInThisSwimlane _id
           +list(currentList)
@@ -59,7 +60,8 @@ template(name="addListForm")
                   option(value="{{_id}}" selected=currentBoard.getLastList.title) {{title}}
             .edit-controls.clearfix
               button.primary.confirm(type="submit") {{_ 'save'}}
-              .fa.fa-times-thin.js-close-inlined-form
+              .js-close-inlined-form
+                | ❌
               unless currentBoard.isTemplatesBoard
                 unless currentBoard.isTemplateBoard
                   span.quiet
@@ -67,24 +69,26 @@ template(name="addListForm")
                     a.js-list-template {{_ 'template'}}
           else
             a.open-list-composer.js-open-inlined-form(title="{{_ 'add-list'}}")
-              i.fa.fa-plus
+              | ➕
 
 template(name="moveSwimlanePopup")
-  unless currentUser.isWorker
-    label {{_ 'boards'}}:
-    select.js-select-boards(autofocus)
-      each toBoard in toBoards
-        option(value="{{toBoard._id}}") {{toBoard.title}}
+  if currentUser
+    unless currentUser.isWorker
+      label {{_ 'boards'}}:
+      select.js-select-boards(autofocus)
+        each toBoard in toBoards
+          option(value="{{toBoard._id}}") {{toBoard.title}}
 
-  .edit-controls.clearfix
-    button.primary.confirm.js-done {{_ 'done'}}
+      .edit-controls.clearfix
+        button.primary.confirm.js-done {{_ 'done'}}
 
 template(name="copySwimlanePopup")
-  unless currentUser.isWorker
-    label {{_ 'boards'}}:
-    select.js-select-boards(autofocus)
-      each toBoard in toBoards
-        option(value="{{toBoard._id}}" selected="{{#if $eq toBoard.title board.title}}1{{/if}}") {{toBoard.title}}
+  if currentUser
+    unless currentUser.isWorker
+      label {{_ 'boards'}}:
+      select.js-select-boards(autofocus)
+        each toBoard in toBoards
+          option(value="{{toBoard._id}}" selected="{{#if $eq toBoard.title board.title}}1{{/if}}") {{toBoard.title}}
 
-  .edit-controls.clearfix
-    button.primary.confirm.js-done {{_ 'done'}}
+      .edit-controls.clearfix
+        button.primary.confirm.js-done {{_ 'done'}}

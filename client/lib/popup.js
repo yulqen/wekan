@@ -46,6 +46,8 @@ window.Popup = new (class {
           return;
         } else {
           $(previousOpenerElement).removeClass('is-active');
+          // Clean up previous popup content to prevent mixing
+          self._cleanupPreviousPopupContent();
         }
       }
 
@@ -58,7 +60,12 @@ window.Popup = new (class {
       if (clickFromPopup(evt) && self._getTopStack()) {
         openerElement = self._getTopStack().openerElement;
       } else {
-        self._stack = [];
+        // For Member Settings sub-popups, always start fresh to avoid content mixing
+        if (popupName.includes('changeLanguage') || popupName.includes('changeAvatar') || 
+            popupName.includes('editProfile') || popupName.includes('changePassword') ||
+            popupName.includes('invitePeople') || popupName.includes('support')) {
+          self._stack = [];
+        }
         openerElement = evt.currentTarget;
       }
       $(openerElement).addClass('is-active');
@@ -94,6 +101,10 @@ window.Popup = new (class {
       // our internal dependency, and since we just changed the top element of
       // our internal stack, the popup will be updated with the new data.
       if (!self.isOpen()) {
+        if (!Template[popupName]) {
+          console.error('Template not found:', popupName);
+          return;
+        }
         self.current = Blaze.renderWithData(
           self.template,
           () => {
@@ -169,6 +180,8 @@ window.Popup = new (class {
       $(openerElement).removeClass('is-active');
 
       this._stack = [];
+      // Clean up popup content when closing
+      this._cleanupPreviousPopupContent();
     }
   }
 
@@ -182,6 +195,13 @@ window.Popup = new (class {
     return this._stack[this._stack.length - 1];
   }
 
+  _cleanupPreviousPopupContent() {
+    // Force a re-render to ensure proper cleanup
+    if (this._dep) {
+      this._dep.changed();
+    }
+  }
+
   // We automatically calculate the popup offset from the reference element
   // position and dimensions. We also reactively use the window dimensions to
   // ensure that the popup is always visible on the screen.
@@ -193,11 +213,55 @@ window.Popup = new (class {
       if (Utils.isMiniScreen()) return { left: 0, top: 0 };
 
       const offset = $element.offset();
-      const popupWidth = 300 + 15;
-      return {
-        left: Math.min(offset.left, $(window).width() - popupWidth),
-        top: offset.top + $element.outerHeight(),
-      };
+      // Calculate actual popup width based on CSS: min(380px, 55vw)
+      const viewportWidth = $(window).width();
+      const viewportHeight = $(window).height();
+      const popupWidth = Math.min(380, viewportWidth * 0.55) + 15; // Add 15px for margin
+      
+      // Check if this is an admin panel edit popup
+      const isAdminEditPopup = $element.hasClass('edit-user') || 
+                              $element.hasClass('edit-org') || 
+                              $element.hasClass('edit-team');
+      
+      if (isAdminEditPopup) {
+        // Center the popup horizontally and use full height
+        const centeredLeft = (viewportWidth - popupWidth) / 2;
+        
+        return {
+          left: Math.max(10, centeredLeft), // Ensure popup doesn't go off screen
+          top: 10, // Start from top with small margin
+          maxHeight: viewportHeight - 20, // Use full height minus small margins
+        };
+      }
+      
+      // Calculate available height for popup
+      const popupTop = offset.top + $element.outerHeight();
+      
+      // For language popup, don't use dynamic height to avoid overlapping board
+      const isLanguagePopup = $element.hasClass('js-change-language');
+      let availableHeight, maxPopupHeight;
+      
+      if (isLanguagePopup) {
+        // For language popup, position content area below right vertical scrollbar
+        const availableHeight = viewportHeight - popupTop - 20; // 20px margin from bottom (near scrollbar)
+        const calculatedHeight = Math.min(availableHeight, viewportHeight * 0.5); // Max 50% of viewport
+        
+        return {
+          left: Math.min(offset.left, viewportWidth - popupWidth),
+          top: popupTop,
+          maxHeight: Math.max(calculatedHeight, 200), // Minimum 200px height
+        };
+      } else {
+        // For other popups, use the dynamic height calculation
+        availableHeight = viewportHeight - popupTop - 20; // 20px margin from bottom
+        maxPopupHeight = Math.min(availableHeight, viewportHeight * 0.8); // Max 80% of viewport
+        
+        return {
+          left: Math.min(offset.left, viewportWidth - popupWidth),
+          top: popupTop,
+          maxHeight: Math.max(maxPopupHeight, 200), // Minimum 200px height
+        };
+      }
     };
   }
 

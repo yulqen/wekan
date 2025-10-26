@@ -33,6 +33,8 @@ BlazeComponent.extendComponent({
     return currentBoard && currentBoard.getWatchLevel(Meteor.userId());
   },
 
+
+
   isStarred() {
     const boardId = Session.get('currentBoard');
     const user = ReactiveCache.getCurrentUser();
@@ -80,10 +82,37 @@ BlazeComponent.extendComponent({
         },
         'click .js-toggle-board-view': Popup.open('boardChangeView'),
         'click .js-toggle-sidebar'() {
-          Sidebar.toggle();
+          if (process.env.DEBUG === 'true') {
+            console.log('Hamburger menu clicked');
+          }
+          // Use the same approach as keyboard shortcuts
+          if (typeof Sidebar !== 'undefined' && Sidebar && typeof Sidebar.toggle === 'function') {
+            if (process.env.DEBUG === 'true') {
+              console.log('Using Sidebar.toggle()');
+            }
+            Sidebar.toggle();
+          } else {
+            if (process.env.DEBUG === 'true') {
+              console.warn('Sidebar not available, trying alternative approach');
+            }
+            // Try to trigger the sidebar through the global Blaze helper
+            if (typeof Blaze !== 'undefined' && Blaze._globalHelpers && Blaze._globalHelpers.Sidebar) {
+              const sidebar = Blaze._globalHelpers.Sidebar();
+              if (sidebar && typeof sidebar.toggle === 'function') {
+                if (process.env.DEBUG === 'true') {
+                  console.log('Using Blaze helper Sidebar.toggle()');
+                }
+                sidebar.toggle();
+              }
+            }
+          }
         },
         'click .js-open-filter-view'() {
-          Sidebar.setView('filter');
+          if (Sidebar) {
+            Sidebar.setView('filter');
+          } else {
+            console.warn('Sidebar not available for setView');
+          }
         },
         'click .js-sort-cards': Popup.open('cardsSort'),
         /*
@@ -100,14 +129,22 @@ BlazeComponent.extendComponent({
         */
         'click .js-filter-reset'(event) {
           event.stopPropagation();
-          Sidebar.setView();
+          if (Sidebar) {
+            Sidebar.setView();
+          } else {
+            console.warn('Sidebar not available for setView');
+          }
           Filter.reset();
         },
         'click .js-sort-reset'() {
           Session.set('sortBy', '');
         },
         'click .js-open-search-view'() {
-          Sidebar.setView('search');
+          if (Sidebar) {
+            Sidebar.setView('search');
+          } else {
+            console.warn('Sidebar not available for setView');
+          }
         },
         'click .js-multiselection-activate'() {
           const currentCard = Utils.getCurrentCardId();
@@ -126,6 +163,7 @@ BlazeComponent.extendComponent({
       },
     ];
   },
+
 }).register('boardHeaderBar');
 
 Template.boardHeaderBar.helpers({
@@ -134,6 +172,23 @@ Template.boardHeaderBar.helpers({
   },
   isSortActive() {
     return Session.get('sortBy') ? true : false;
+  },
+  sortCardsIcon() {
+    const sortBy = Session.get('sortBy');
+    if (!sortBy) {
+      return '🃏'; // Card icon when nothing is selected
+    }
+    
+    // Determine which sort option is active based on sortBy object
+    if (sortBy.dueAt) {
+      return '📅'; // Due date icon
+    } else if (sortBy.title) {
+      return '🔤'; // Alphabet icon
+    } else if (sortBy.createdAt) {
+      return sortBy.createdAt === 1 ? '⬆️' : '⬇️'; // Up/down arrow based on direction
+    }
+    
+    return '🃏'; // Default card icon
   },
 });
 
@@ -201,6 +256,7 @@ const CreateBoard = BlazeComponent.extendComponent({
             title: title,
             permission: 'private',
             type: 'template-container',
+            migrationVersion: 1, // Latest version - no migration needed
           }),
        );
 
@@ -244,6 +300,7 @@ const CreateBoard = BlazeComponent.extendComponent({
         Boards.insert({
           title,
           permission: visibility,
+          migrationVersion: 1, // Latest version - no migration needed
         }),
       );
 

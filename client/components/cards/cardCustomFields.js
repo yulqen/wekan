@@ -1,6 +1,27 @@
-import moment from 'moment/min/moment-with-locales';
 import { TAPi18n } from '/imports/i18n';
 import { DatePicker } from '/client/lib/datepicker';
+import { ReactiveCache } from '/imports/reactiveCache';
+import { 
+  formatDateTime, 
+  formatDate, 
+  formatDateByUserPreference,
+  formatTime, 
+  getISOWeek, 
+  isValidDate, 
+  isBefore, 
+  isAfter, 
+  isSame, 
+  add, 
+  subtract, 
+  startOf, 
+  endOf, 
+  format, 
+  parseDate, 
+  now, 
+  createDate, 
+  fromNow, 
+  calendar 
+} from '/imports/lib/dateUtils';
 import Cards from '/models/cards';
 import { CustomFieldStringTemplate } from '/client/lib/customFields'
 
@@ -134,31 +155,33 @@ CardCustomField.register('cardCustomField');
     super.onCreated();
     const self = this;
     self.date = ReactiveVar();
-    self.now = ReactiveVar(moment());
+    self.now = ReactiveVar(now());
     window.setInterval(() => {
-      self.now.set(moment());
+      self.now.set(now());
     }, 60000);
 
     self.autorun(() => {
-      self.date.set(moment(self.data().value));
+      self.date.set(new Date(self.data().value));
     });
   }
 
   showWeek() {
-    return this.date.get().week().toString();
+    return getISOWeek(this.date.get()).toString();
   }
 
   showWeekOfYear() {
-    return ReactiveCache.getCurrentUser().isShowWeekOfYear();
+    const user = ReactiveCache.getCurrentUser();
+    if (!user) {
+      // For non-logged-in users, week of year is not shown
+      return false;
+    }
+    return user.isShowWeekOfYear();
   }
 
   showDate() {
-    // this will start working once mquandalle:moment
-    // is updated to at least moment.js 2.10.5
-    // until then, the date is displayed in the "L" format
-    return this.date.get().calendar(null, {
-      sameElse: 'llll',
-    });
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    return formatDateByUserPreference(this.date.get(), dateFormat, true);
   }
 
   showISODate() {
@@ -167,8 +190,8 @@ CardCustomField.register('cardCustomField');
 
   classes() {
     if (
-      this.date.get().isBefore(this.now.get(), 'minute') &&
-      this.now.get().isBefore(this.data().value)
+      isBefore(this.date.get(), this.now.get(), 'minute') &&
+      isBefore(this.now.get(), this.data().value, 'minute')
     ) {
       return 'current';
     }
@@ -176,7 +199,7 @@ CardCustomField.register('cardCustomField');
   }
 
   showTitle() {
-    return `${TAPi18n.__('card-start-on')} ${this.date.get().format('LLLL')}`;
+    return `${TAPi18n.__('card-start-on')} ${this.date.get().toLocaleString()}`;
   }
 
   events() {
@@ -195,7 +218,7 @@ CardCustomField.register('cardCustomField');
     const self = this;
     self.card = Utils.getCurrentCard();
     self.customFieldId = this.data()._id;
-    this.data().value && this.date.set(moment(this.data().value));
+    this.data().value && this.date.set(new Date(this.data().value));
   }
 
   _storeDate(date) {

@@ -21,3 +21,111 @@ template(name="dateCustomField")
       if showWeekOfYear
         b
           | {{showWeek}}
+
+template(name="minicardReceivedDate")
+  if canModifyCard
+    a.js-edit-date.card-date.received-date(title="{{_ 'card-received'}} {{_ 'predicate-week'}} {{#if showWeekOfYear}}{{showWeek}}{{/if}}" class="{{classes}}")
+      time(datetime="{{showISODate}}")
+        | {{showDate}}
+        if showWeekOfYear
+          b
+            | {{showWeek}}
+  else
+    a.card-date.received-date(title="{{_ 'card-received'}} {{_ 'predicate-week'}} {{#if showWeekOfYear}}{{showWeek}}{{/if}}" class="{{classes}}")
+      time(datetime="{{showISODate}}")
+        | {{showDate}}
+        if showWeekOfYear
+          b
+            | {{showWeek}}
+
+template(name="minicardStartDate")
+  if canModifyCard
+    a.js-edit-date.card-date.start-date(title="{{_ 'card-start'}} {{_ 'predicate-week'}} {{#if showWeekOfYear}}{{showWeek}}{{/if}}" class="{{classes}}")
+      time(datetime="{{showISODate}}")
+        | {{showDate}}
+        if showWeekOfYear
+          b
+            | {{showWeek}}
+  else
+    a.card-date.start-date(title="{{_ 'card-start'}} {{_ 'predicate-week'}} {{#if showWeekOfYear}}{{showWeek}}{{/if}}" class="{{classes}}")
+      time(datetime="{{showISODate}}")
+        | {{showDate}}
+        if showWeekOfYear
+          b
+            | {{showWeek}}
+
+template(name="minicardDueDate")
+  if canModifyCard
+    a.js-edit-date.card-date.due-date(title="{{_ 'card-due'}} {{_ 'predicate-week'}} {{#if showWeekOfYear}}{{showWeek}}{{/if}}" class="{{classes}}")
+      time(datetime="{{showISODate}}")
+        | {{showDate}}
+        if showWeekOfYear
+          b
+            | {{showWeek}}
+  else
+    a.card-date.due-date(title="{{_ 'card-due'}} {{_ 'predicate-week'}} {{#if showWeekOfYear}}{{showWeek}}{{/if}}" class="{{classes}}")
+      time(datetime="{{showISODate}}")
+        | {{showDate}}
+        if showWeekOfYear
+          b
+            | {{showWeek}}
+
+template(name="minicardEndDate")
+  if canModifyCard
+    a.js-edit-date.card-date.end-date(title="{{_ 'card-end'}} {{_ 'predicate-week'}} {{#if showWeekOfYear}}{{showWeek}}{{/if}}" class="{{classes}}")
+      time(datetime="{{showISODate}}")
+        | {{showDate}}
+        if showWeekOfYear
+          b
+            | {{showWeek}}
+  else
+    a.card-date.end-date(title="{{_ 'card-end'}} {{_ 'predicate-week'}} {{#if showWeekOfYear}}{{showWeek}}{{/if}}" class="{{classes}}")
+      time(datetime="{{showISODate}}")
+        | {{showDate}}
+        if showWeekOfYear
+          b
+            | {{showWeek}}
+
+template(name="minicardCustomFieldDate")
+  a(title="{{_ 'date'}} {{_ 'predicate-week'}} {{#if showWeekOfYear}}{{showWeek}}{{/if}}" class="{{classes}}")
+    time(datetime="{{showISODate}}")
+      | {{showDate}}
+      if showWeekOfYear
+        b
+          | {{showWeek}}
+
+template(name="editCardReceivedDatePopup")
+  form.edit-card-received-date
+    .datepicker
+    .clear-date
+      a.js-clear-date {{_ 'clear'}}
+    .datepicker-actions
+      button.primary.wide.left(type="submit") {{_ 'save'}}
+      button.js-delete-date.negate.wide.right {{_ 'delete'}}
+
+template(name="editCardStartDatePopup")
+  form.edit-card-start-date
+    .datepicker
+    .clear-date
+      a.js-clear-date {{_ 'clear'}}
+    .datepicker-actions
+      button.primary.wide.left(type="submit") {{_ 'save'}}
+      button.js-delete-date.negate.wide.right {{_ 'delete'}}
+
+template(name="editCardDueDatePopup")
+  form.edit-card-due-date
+    .datepicker
+    .clear-date
+      a.js-clear-date {{_ 'clear'}}
+    .datepicker-actions
+      button.primary.wide.left(type="submit") {{_ 'save'}}
+      button.js-delete-date.negate.wide.right {{_ 'delete'}}
+
+template(name="editCardEndDatePopup")
+  form.edit-card-end-date
+    .datepicker
+    .clear-date
+      a.js-clear-date {{_ 'clear'}}
+    .datepicker-actions
+      button.primary.wide.left(type="submit") {{_ 'save'}}
+      button.js-delete-date.negate.wide.right {{_ 'delete'}}

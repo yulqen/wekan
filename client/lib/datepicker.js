@@ -1,12 +1,30 @@
 import { ReactiveCache } from '/imports/reactiveCache';
 import { TAPi18n } from '/imports/i18n';
-import moment from 'moment/min/moment-with-locales';
+import { 
+  formatDateTime, 
+  formatDate, 
+  formatDateByUserPreference,
+  formatTime, 
+  getISOWeek, 
+  isValidDate, 
+  isBefore, 
+  isAfter, 
+  isSame, 
+  add, 
+  subtract, 
+  startOf, 
+  endOf, 
+  format, 
+  parseDate, 
+  now, 
+  createDate, 
+  fromNow, 
+  calendar 
+} from '/imports/lib/dateUtils';
 
-// Helper function to replace HH with H for 24 hours format, because H allows also single-digit hours
+// Helper function to get time format for 24 hours
 function adjustedTimeFormat() {
-  return moment
-    .localeData()
-    .longDateFormat('LT');
+  return 'HH:mm';
 }
 
 //   .replace(/HH/i, 'H');
@@ -19,7 +37,7 @@ export class DatePicker extends BlazeComponent {
   onCreated(defaultTime = '1970-01-01 08:00:00') {
     this.error = new ReactiveVar('');
     this.card = this.data();
-    this.date = new ReactiveVar(moment.invalid());
+    this.date = new ReactiveVar(new Date('invalid'));
     this.defaultTime = defaultTime;
   }
 
@@ -33,102 +51,164 @@ export class DatePicker extends BlazeComponent {
   }
 
   onRendered() {
-    const $picker = this.$('.js-datepicker')
-      .datepicker({
-        todayHighlight: true,
-        todayBtn: 'linked',
-        language: TAPi18n.getLanguage(),
-        weekStart: this.startDayOfWeek(),
-        calendarWeeks: true,
-      })
-      .on(
-        'changeDate',
-        function(evt) {
-          this.find('#date').value = moment(evt.date).format('L');
-          this.error.set('');
-          const timeInput = this.find('#time');
-          timeInput.focus();
-          if (!timeInput.value && this.defaultTime) {
-            const currentHour = evt.date.getHours();
-            const defaultMoment = moment(
-              currentHour > 0 ? evt.date : this.defaultTime,
-            ); // default to 8:00 am local time
-            timeInput.value = defaultMoment.format('LT');
-          }
-        }.bind(this),
-      );
-
-    if (this.date.get().isValid()) {
-      $picker.datepicker('update', this.date.get().toDate());
+    // Set initial values for text and time inputs
+    if (isValidDate(this.date.get())) {
+      const dateInput = this.find('#date');
+      const timeInput = this.find('#time');
+      
+      if (dateInput) {
+        // Use user's preferred format for text input
+        const currentUser = ReactiveCache.getCurrentUser();
+        const userFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+        dateInput.value = formatDateByUserPreference(this.date.get(), userFormat, false);
+      }
+      if (timeInput) {
+        if (!timeInput.value && this.defaultTime) {
+          const defaultDate = new Date(this.defaultTime);
+          timeInput.value = formatTime(defaultDate);
+        } else if (isValidDate(this.date.get())) {
+          timeInput.value = formatTime(this.date.get());
+        }
+      }
     }
   }
 
   showDate() {
-    if (this.date.get().isValid()) return this.date.get().format('L');
+    if (isValidDate(this.date.get())) {
+      // Use user's preferred format for display, but HTML date input needs YYYY-MM-DD
+      const currentUser = ReactiveCache.getCurrentUser();
+      const userFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+      return formatDateByUserPreference(this.date.get(), userFormat, false);
+    }
     return '';
   }
   showTime() {
-    if (this.date.get().isValid()) return this.date.get().format('LT');
+    if (isValidDate(this.date.get())) return formatTime(this.date.get());
     return '';
   }
   dateFormat() {
-    return moment.localeData().longDateFormat('L');
+    const currentUser = ReactiveCache.getCurrentUser();
+    const userFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    // Convert format to localized placeholder
+    switch (userFormat) {
+      case 'DD-MM-YYYY':
+        return TAPi18n.__('date-format-dd-mm-yyyy') || 'PP-KK-VVVV';
+      case 'MM-DD-YYYY':
+        return TAPi18n.__('date-format-mm-dd-yyyy') || 'KK-PP-VVVV';
+      case 'YYYY-MM-DD':
+      default:
+        return TAPi18n.__('date-format-yyyy-mm-dd') || 'VVVV-KK-PP';
+    }
   }
   timeFormat() {
-    return moment.localeData().longDateFormat('LT');
+    return 'LT';
   }
 
   events() {
     return [
       {
-        'keyup .js-date-field'() {
-          // parse for localized date format in strict mode
-          const dateMoment = moment(this.find('#date').value, 'L', true);
-          if (dateMoment.isValid()) {
-            this.error.set('');
-            this.$('.js-datepicker').datepicker('update', dateMoment.toDate());
+        'change .js-date-field'() {
+          // Text input date validation
+          const dateInput = this.find('#date');
+          if (!dateInput) return;
+          
+          const dateValue = dateInput.value;
+          if (dateValue) {
+            // Try to parse different date formats
+            const formats = [
+              'YYYY-MM-DD',
+              'DD-MM-YYYY', 
+              'MM-DD-YYYY',
+              'DD/MM/YYYY',
+              'MM/DD/YYYY',
+              'DD.MM.YYYY',
+              'MM.DD.YYYY'
+            ];
+            
+            let parsedDate = null;
+            for (const format of formats) {
+              parsedDate = parseDate(dateValue, [format], true);
+              if (parsedDate) break;
+            }
+            
+            // Fallback to native Date parsing
+            if (!parsedDate) {
+              parsedDate = new Date(dateValue);
+            }
+
+            if (isValidDate(parsedDate)) {
+              this.error.set('');
+            } else {
+              this.error.set('invalid-date');
+            }
           }
         },
-        'keyup .js-time-field'() {
-          // parse for localized time format in strict mode
-          const dateMoment = moment(
-            this.find('#time').value,
-            adjustedTimeFormat(),
-            true,
-          );
-          if (dateMoment.isValid()) {
-            this.error.set('');
+        'change .js-time-field'() {
+          // Native HTML time input validation
+          const timeInput = this.find('#time');
+          if (!timeInput) return;
+          
+          const timeValue = timeInput.value;
+          if (timeValue) {
+            const timeObj = new Date(`1970-01-01T${timeValue}`);
+            if (isValidDate(timeObj)) {
+              this.error.set('');
+            } else {
+              this.error.set('invalid-time');
+            }
           }
         },
         'submit .edit-date'(evt) {
           evt.preventDefault();
 
-          // if no time was given, init with 12:00
-          const time =
-            evt.target.time.value ||
-            moment(new Date().setHours(12, 0, 0)).format('LT');
-          const newTime = moment(time, adjustedTimeFormat(), true);
-          const newDate = moment(evt.target.date.value, 'L', true);
-          const dateString = `${evt.target.date.value} ${time}`;
-          const newCompleteDate = moment(
-            dateString,
-            `L ${adjustedTimeFormat()}`,
-            true,
-          );
-          if (!newTime.isValid()) {
-            this.error.set('invalid-time');
-            evt.target.time.focus();
-          }
-          if (!newDate.isValid()) {
+          const dateValue = evt.target.date.value;
+          const timeValue = evt.target.time.value || '12:00'; // Default to 12:00 if no time given
+          
+          if (!dateValue) {
             this.error.set('invalid-date');
             evt.target.date.focus();
+            return;
           }
-          if (newCompleteDate.isValid()) {
-            this._storeDate(newCompleteDate.toDate());
-            Popup.back();
-          } else if (!this.error) {
+
+          // Try to parse different date formats
+          const formats = [
+            'YYYY-MM-DD',
+            'DD-MM-YYYY', 
+            'MM-DD-YYYY',
+            'DD/MM/YYYY',
+            'MM/DD/YYYY',
+            'DD.MM.YYYY',
+            'MM.DD.YYYY'
+          ];
+          
+          let parsedDate = null;
+          for (const format of formats) {
+            parsedDate = parseDate(dateValue, [format], true);
+            if (parsedDate) break;
+          }
+          
+          // Fallback to native Date parsing
+          if (!parsedDate) {
+            parsedDate = new Date(dateValue);
+          }
+
+          if (!isValidDate(parsedDate)) {
             this.error.set('invalid');
+            return;
           }
+
+          // Combine with time
+          const timeObj = new Date(`1970-01-01T${timeValue}`);
+          if (!isValidDate(timeObj)) {
+            this.error.set('invalid-time');
+            return;
+          }
+
+          // Set the time on the parsed date
+          parsedDate.setHours(timeObj.getHours(), timeObj.getMinutes(), 0, 0);
+
+          this._storeDate(parsedDate);
+          Popup.back();
         },
         'click .js-delete-date'(evt) {
           evt.preventDefault();

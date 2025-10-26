@@ -52,9 +52,15 @@ input,
 select,
 textarea,
 button {
-  font: 14px Roboto, Poppins, "Helvetica Neue", Arial, Helvetica, sans-serif;
-  line-height: 18px;
+  font: clamp(14px, 2.5vw, 18px) Roboto, Poppins, "Helvetica Neue", Arial, Helvetica, sans-serif;
+  line-height: 1.4;
   color: #4d4d4d;
+  /* Improve text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Better text selection */
+  -webkit-user-select: text;
+  user-select: text;
 }
 html {
   font-size: 100%;
@@ -85,8 +91,8 @@ body {
   margin-top: 30vh;
 }
 #content > .wrapper {
-  margin-top: 10px;
-  padding: 15px;
+  margin-top: 1vh;
+  padding: 2vh 2vw;
 }
 #modal {
   position: absolute;
@@ -99,56 +105,56 @@ body {
   overflow-y: auto;
 }
 #modal .modal-content {
-  width: 500px;
-  min-height: 160px;
-  margin: 42px auto;
-  padding: 12px;
-  border-radius: 4px;
+  width: min(500px, 90vw);
+  min-height: 20vh;
+  margin: 5vh auto;
+  padding: 2vh 2vw;
+  border-radius: 0.5vw;
   background: #dedede;
   z-index: 110;
 }
 #modal .modal-content h2 {
-  margin-bottom: 25px;
+  margin-bottom: 3vh;
 }
 #modal .modal-content .modal-close-btn {
   display: block;
   float: right;
-  font-size: 24px;
+  font-size: clamp(18px, 4vw, 24px);
 }
 #modal .modal-content-wide {
-  width: 800px;
+  width: min(800px, 95vw);
   min-height: 0px;
-  margin: 42px auto;
-  padding: 12px;
-  border-radius: 4px;
+  margin: 5vh auto;
+  padding: 2vh 2vw;
+  border-radius: 0.5vw;
   background: #dedede;
   z-index: 110;
 }
 #modal .modal-content-wide h2 {
-  margin-bottom: 25px;
+  margin-bottom: 3vh;
 }
 #modal .modal-content-wide .modal-close-btn {
   display: block;
   float: right;
-  font-size: 24px;
+  font-size: clamp(18px, 4vw, 24px);
 }
 h1 {
-  font-size: 22px;
+  font-size: clamp(18px, 4vw, 24px);
   line-height: 1.2em;
-  margin: 0 0 10px;
+  margin: 0 0 1vh;
 }
 h2 {
-  font-size: 18px;
+  font-size: clamp(16px, 3.5vw, 20px);
   line-height: 1.2em;
-  margin: 0 0 9px;
+  margin: 0 0 0.8vh;
 }
 h3,
 h4,
 h5,
 h6 {
-  font-size: 16px;
+  font-size: clamp(14px, 3vw, 18px);
   line-height: 1.25em;
-  margin: 0 0 6px;
+  margin: 0 0 0.6vh;
 }
 .quiet,
 .quiet a {
@@ -160,14 +166,14 @@ h6 {
 }
 .no-items-message {
   color: #666;
-  margin: 30px 0;
+  margin: 4vh 0;
   text-align: center;
 }
 .warning {
   background: #f0ecdb;
-  border-radius: 3px;
+  border-radius: 0.4vw;
   color: #aa8f09;
-  padding: 6px 8px;
+  padding: 1vh 1.2vw;
 }
 .warning a {
   color: #aa8f09;
@@ -194,7 +200,7 @@ strong {
 p {
   -webkit-user-select: text;
   user-select: text;
- 
+
 
 }
 p a {
@@ -203,12 +209,12 @@ p a {
 }
 table,
 p {
-  margin-bottom: 8px;
+  margin-bottom: 1vh;
 }
 pre {
-  margin: 15px 0;
+  margin: 2vh 0;
   white-space: pre;
-  max-height: 516px;
+  max-height: 60vh;
 }
 pre,
 code,
@@ -217,10 +223,10 @@ tt {
   line-height: 1.3em;
 }
 blockquote {
-  margin: 8px 0 8px 8px;
+  margin: 1vh 0 1vh 1vw;
   border-left: 1px solid #ccc;
   color: #666;
-  padding: 0 0 0 8px;
+  padding: 0 0 0 1vw;
 }
 hr {
   height: 1px;
@@ -229,7 +235,7 @@ hr {
   width: 100%;
   background: #dbdbdb;
   color: #dbdbdb;
-  margin: 15px 0;
+  margin: 2vh 0;
   padding: 0;
 }
 table,
@@ -241,7 +247,7 @@ th {
 }
 td,
 th {
-  padding: 5px;
+  padding: 0.8vh 0.8vw;
   border-right: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
 }
@@ -257,20 +263,20 @@ tbody {
 }
 dl,
 dt {
-  margin-bottom: 8px;
+  margin-bottom: 1vh;
 }
 dd {
-  margin: 0 0 16px 24px;
+  margin: 0 0 2vh 3vw;
 }
 kbd {
-  padding: 1px 3px;
-  margin: 3px;
+  padding: 0.2vh 0.5vw;
+  margin: 0.5vh;
   font-weight: bold;
   background: #fafafa;
-  border-radius: 3px;
+  border-radius: 0.4vw;
   border: 1px solid #e6e6e6;
   color: unset;
-  box-shadow: 0px 2px 3px rgba(0,0,0,0.15);
+  box-shadow: 0px 0.3vh 0.5vh rgba(0,0,0,0.15);
 }
 .clear {
   clear: both;
@@ -310,7 +316,7 @@ kbd {
   padding-bottom: 0;
 }
 .wrapper {
-  width: calc(100% - 20px);
+  width: calc(100% - 2vw);
   margin: 0 auto;
 }
 .relative {
@@ -401,23 +407,23 @@ a:not(.disabled).is-active i.fa {
 }
 .big-message {
   display: block;
-  margin: 75px auto;
+  margin: 10vh auto;
   text-align: center;
-  max-width: 600px;
+  max-width: min(600px, 90vw);
 }
 .big-message h1 {
-  font-size: 26px;
-  margin-bottom: 24px;
+  font-size: clamp(20px, 5vw, 28px);
+  margin-bottom: 3vh;
 }
 .big-message p {
-  font-size: 18px;
-  line-height: 22px;
+  font-size: clamp(16px, 3.5vw, 20px);
+  line-height: 1.3;
 }
 .gutter {
-  margin-left: 38px;
+  margin-left: 5vw;
 }
 .viewer {
-  min-height: 18px;
+  min-height: 2.5vh;
   display: block;
   word-wrap: break-word;
 }
@@ -427,13 +433,13 @@ a:not(.disabled).is-active i.fa {
 }
 .viewer ol {
   list-style-type: decimal;
-  padding-left: 20px;
-  padding-bottom: 10px;
+  padding-left: 3vw;
+  padding-bottom: 1.5vh;
 }
 .viewer ul {
   list-style-type: initial;
-  padding-left: 20px;
-  padding-bottom: 10px;
+  padding-left: 3vw;
+  padding-bottom: 1.5vh;
 }
 .viewer em {
   font-style: italic;
@@ -460,20 +466,291 @@ a:not(.disabled).is-active i.fa {
 .no-scrollbars::-webkit-scrollbar {
   display: none !important;
 }
-@media screen and (max-width: 800px) {
+/* ========================================
+   MOBILE & TABLET RESPONSIVE IMPROVEMENTS
+   ======================================== */
+
+/* Mobile devices (up to 800px) and all iPhone models */
+@media screen and (max-width: 800px),
+       screen and (max-device-width: 932px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: landscape),
+       screen and (max-device-width: 932px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: portrait) {
   #content {
     margin: 1px 0px 0px 0px;
     height: calc(100% - 0px);
+    /* Improve touch scrolling */
+    -webkit-overflow-scrolling: touch;
   }
   #content > .wrapper {
     margin-top: 0px;
+    padding: 8px;
   }
   .wrapper {
     height: calc(100% - 31px);
     margin: 0px;
+    padding: 8px;
   }
   .panel-default {
-    width: 83vw;
+    width: 95vw;
+    max-width: 95vw;
+    margin: 0 auto;
+  }
+  
+  /* Improve touch targets */
+  button, .btn, .js-toggle, .js-color-choice, .js-reaction, .close {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px 16px;
+    font-size: 16px; /* Prevent zoom on iOS */
+    touch-action: manipulation;
+  }
+  
+  /* Form elements */
+  input, select, textarea {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 12px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Cards and lists */
+  .minicard {
+    min-height: 48px;
+    padding: 12px;
+    margin-bottom: 8px;
+    touch-action: manipulation;
+  }
+  
+  .list {
+    margin: 0 8px;
+    min-width: 280px;
+  }
+  
+  /* Board canvas */
+  .board-canvas {
+    padding: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Header mobile layout */
+  #header {
+    padding: 8px;
+    /* Keep top bar on a single row on small screens */
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  #header-quick-access {
+    /* Keep quick-access items in one row */
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  /* Hide elements that should move to the hamburger menu on mobile */
+  #header-quick-access .header-quick-access-list,
+  #header-quick-access #header-help {
+    display: none !important;
+  }
+
+  /* Show only the home icon (hide the trailing text) on mobile */
+  #header-quick-access .home-icon a {
+    display: inline-flex;
+    align-items: center;
+    max-width: 28px; /* enough to display the icon */
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  
+  /* Hide text in home icon on mobile, show only icon */
+  #header-quick-access .home-icon a span:not(.fa) {
+    display: none !important;
+  }
+  
+  /* Ensure proper spacing for mobile header elements */
+  #header-quick-access .zoom-controls {
+    margin-left: auto;
+    margin-right: 8px;
+  }
+  
+  .mobile-mode-toggle {
+    margin-right: 8px;
+  }
+  
+  #header-user-bar {
+    margin-left: auto;
+  }
+  
+  /* Ensure header elements don't wrap on very small screens */
+  #header-quick-access {
+    min-width: 0; /* Allow flexbox to shrink */
+  }
+  
+  /* Make sure logo doesn't take too much space on mobile */
+  #header-quick-access img {
+    max-height: 24px;
+    max-width: 120px;
+  }
+  
+  /* Ensure zoom controls are compact on mobile */
+  .zoom-controls .zoom-level {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  
+  /* Modal mobile optimization */
+  #modal .modal-content,
+  #modal .modal-content-wide {
+    width: 95vw;
+    max-width: 95vw;
+    margin: 2vh auto;
+    padding: 16px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  /* Table mobile optimization */
+  table {
+    font-size: 14px;
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Admin panel mobile optimization */
+  .setting-content .content-body {
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px;
+  }
+  
+  .setting-content .content-body .side-menu {
+    width: 100%;
+    order: 2;
+  }
+  
+  .setting-content .content-body .main-body {
+    order: 1;
+    min-height: 60vh;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Tablet devices (768px - 1024px) */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+  #content > .wrapper {
+    padding: 12px;
+  }
+  
+  .wrapper {
+    padding: 12px;
+  }
+  
+  .panel-default {
+    width: 90vw;
+    max-width: 90vw;
+  }
+  
+  /* Touch-friendly but more compact */
+  button, .btn, .js-toggle, .js-color-choice, .js-reaction, .close {
+    min-height: 48px;
+    min-width: 48px;
+    padding: 10px 14px;
+  }
+  
+  .minicard {
+    min-height: 40px;
+    padding: 10px;
+  }
+  
+  .list {
+    margin: 0 12px;
+    min-width: 300px;
+  }
+  
+  .board-canvas {
+    padding: 12px;
+  }
+  
+  #header {
+    padding: 12px 16px;
+  }
+  
+  #modal .modal-content {
+    width: 80vw;
+    max-width: 600px;
+  }
+  
+  #modal .modal-content-wide {
+    width: 90vw;
+    max-width: 800px;
+  }
+  
+  .setting-content .content-body {
+    gap: 20px;
+  }
+  
+  .setting-content .content-body .side-menu {
+    width: 250px;
+  }
+}
+
+/* Large displays and digital signage (1920px+) */
+@media screen and (min-width: 1920px) {
+  body {
+    font-size: 18px;
+  }
+  
+  button, .btn, .js-toggle, .js-color-choice, .js-reaction, .close {
+    min-height: 56px;
+    min-width: 56px;
+    padding: 16px 20px;
+    font-size: 18px;
+  }
+  
+  .minicard {
+    min-height: 56px;
+    padding: 16px;
+    font-size: 18px;
+  }
+  
+  .list {
+    margin: 0 8px;
+    min-width: 360px;
+  }
+  
+  .board-canvas {
+    padding: 0;
+  }
+  
+  #header {
+    padding: 0 8px;
+  }
+  
+  #content > .wrapper {
+    padding: 0;
+  }
+  
+  #modal .modal-content {
+    width: 600px;
+  }
+  
+  #modal .modal-content-wide {
+    width: 1000px;
+  }
+  
+  .setting-content .content-body {
+    gap: 32px;
+  }
+  
+  .setting-content .content-body .side-menu {
+    width: 320px;
   }
 }
 .inline-input {

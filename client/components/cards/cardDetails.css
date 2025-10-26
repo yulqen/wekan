@@ -1,3 +1,31 @@
+/* Date Format Selector */
+.card-details-item-date-format {
+  margin-bottom: 10px;
+}
+
+.card-details-item-date-format .card-details-item-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.card-details-item-date-format .js-date-format-selector {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.card-details-item-date-format .js-date-format-selector:focus {
+  outline: none;
+  border-color: #007cba;
+  box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.2);
+}
+
 .assignee {
   border-radius: 3px;
   display: block;
@@ -70,23 +98,23 @@
 }
 .copied-tooltip {
   display: none;
-  padding: 0px 10px;
+  padding: 0 1.3vw;
   background-color: rgba(0,0,0,0.875);
   color: #fff;
-  border-radius: 5px;
+  border-radius: 0.7vw;
 }
 .card-details {
   padding: 0;
   flex-shrink: 0;
-  flex-basis: 600px;
+  flex-basis: min(600px, 80vw);
   will-change: flex-basis;
   overflow-y: scroll;
   overflow-x: hidden;
   background: #f7f7f7;
-  border-radius: bottom 3px;
+  border-radius: bottom 0.4vw;
   z-index: 30;
   animation: flexGrowIn 0.1s;
-  box-shadow: 0 0 7px 0 #b3b3b3;
+  box-shadow: 0 0 0.9vh 0 #b3b3b3;
   transition: flex-basis 0.1s;
   box-sizing: border-box;
 }
@@ -95,7 +123,7 @@
 }
 .card-details .card-details-canvas {
   width: auto;
-  padding: 0 20px;
+  padding: 0 2.5vw;
 }
 .card-details .card-details-header {
   margin: 0 -20px 5px;
@@ -595,4 +623,12 @@ input[type="submit"].attachment-add-link-submit {
   border-radius: 5px;
   overflow: hidden;
   background-color: #cecece;
+}
+
+/* Drag and drop file upload visual feedback */
+.js-card-details.is-dragging-over {
+  border: 2px dashed #0079bf;
+  background-color: #e3f2fd !important;
+  transform: scale(1.01);
+  transition: all 0.2s ease;
 }

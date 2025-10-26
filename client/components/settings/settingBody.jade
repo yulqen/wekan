@@ -3,64 +3,225 @@ template(name="setting")
     unless currentUser.isAdmin
       | {{_ 'error-notAuthorized'}}
     else
-      .content-title
-        i.fa.fa-cog
-        span {{_ 'settings'}}
+      .content-title.ext-box
+        if isGeneralSetting
+          span
+            | 🔑
+            | {{_ 'registration'}}
+        else if isEmailSetting
+          span
+            | ✉️
+            | {{_ 'email'}}
+        else if isAccountSetting
+          span
+            | 👥
+            | {{_ 'accounts'}}
+        else if isTableVisibilityModeSetting
+          span
+            | 👁️
+            | {{_ 'tableVisibilityMode'}}
+        else if isAnnouncementSetting
+          span
+            | 📢
+            | {{_ 'admin-announcement'}}
+        else if isAccessibilitySetting
+          span
+            | ♿
+            | {{_ 'accessibility'}}
+        else if isLayoutSetting
+          span
+            | 🔗
+            | {{_ 'layout'}}
+        else if isWebhookSetting
+          span
+            | 🌐
+            | {{_ 'global-webhook'}}
+        else if isAttachmentSettings
+          span
+            | 📎
+            | {{_ 'attachments'}}
+        else if isCronSettings
+          span
+            | ⏰
+            | {{_ 'cron'}}
       .content-body
         .side-menu
           ul
-            li.active
+            li(class="{{#if isGeneralSetting}}active{{/if}}")
               a.js-setting-menu(data-id="registration-setting")
-                i.fa.fa-sign-in
+                | 🔑
                 | {{_ 'registration'}}
             unless isSandstorm
-              li
+              li(class="{{#if isEmailSetting}}active{{/if}}")
                 a.js-setting-menu(data-id="email-setting")
-                  i.fa.fa-envelope
+                  | ✉️
                   | {{_ 'email'}}
-            li
+            li(class="{{#if isAccountSetting}}active{{/if}}")
               a.js-setting-menu(data-id="account-setting")
-                i.fa.fa-users
+                | 👥
                 | {{_ 'accounts'}}
-            li
+            li(class="{{#if isTableVisibilityModeSetting}}active{{/if}}")
               a.js-setting-menu(data-id="tableVisibilityMode-setting")
-                i.fa.fa-eye
+                | 👁️
                 | {{_ 'tableVisibilityMode'}}
-            li
+            li(class="{{#if isAnnouncementSetting}}active{{/if}}")
               a.js-setting-menu(data-id="announcement-setting")
-                i.fa.fa-bullhorn
+                | 📢
                 | {{_ 'admin-announcement'}}
-            //li
-            //  a.js-setting-menu(data-id="accessibility-setting")
-            //    i.fa.fa-universal-access
-            //    | {{_ 'accessibility'}}
-            li
+            li(class="{{#if isAccessibilitySetting}}active{{/if}}")
+              a.js-setting-menu(data-id="accessibility-setting")
+                | ♿
+                | {{_ 'accessibility'}}
+            li(class="{{#if isLayoutSetting}}active{{/if}}")
               a.js-setting-menu(data-id="layout-setting")
-                i.fa.fa-object-group
+                | 🔗
                 | {{_ 'layout'}}
-            li
+            li(class="{{#if isWebhookSetting}}active{{/if}}")
               a.js-setting-menu(data-id="webhook-setting")
-                i.fa.fa-globe
+                | 🌐
                 | {{_ 'global-webhook'}}
+            li(class="{{#if isAttachmentSettings}}active{{/if}}")
+              a.js-setting-menu(data-id="attachment-settings")
+                | 📎
+                | {{_ 'attachments'}}
+            li(class="{{#if isCronSettings}}active{{/if}}")
+              a.js-setting-menu(data-id="cron-settings")
+                | ⏰
+                | {{_ 'cron'}}
         .main-body
-          if loading.get
+          if isLoading
             +spinner
-          else if generalSetting.get
+          else if isAttachmentSettings
+            ul#attachment-setting.setting-detail
+              li
+                h3 {{_ 'attachment-storage-configuration'}}
+                .form-group
+                  label {{_ 'writable-path'}}
+                  input.wekan-form-control#filesystem-path(type="text" value="{{filesystemPath}}" readonly)
+                  small.form-text.text-muted {{_ 'filesystem-path-description'}}
+                
+                .form-group
+                  label {{_ 'attachments-path'}}
+                  input.wekan-form-control#attachments-path(type="text" value="{{attachmentsPath}}" readonly)
+                  small.form-text.text-muted {{_ 'attachments-path-description'}}
+                
+                .form-group
+                  label {{_ 'avatars-path'}}
+                  input.wekan-form-control#avatars-path(type="text" value="{{avatarsPath}}" readonly)
+                  small.form-text.text-muted {{_ 'avatars-path-description'}}
+
+              li
+                h3 {{_ 'mongodb-gridfs-storage'}}
+                .form-group
+                  label {{_ 'gridfs-enabled'}}
+                  input.wekan-form-control#gridfs-enabled(type="checkbox" checked="{{gridfsEnabled}}" disabled)
+                  small.form-text.text-muted {{_ 'gridfs-enabled-description'}}
+
+              li
+                h3 {{_ 's3-minio-storage'}}
+                .form-group
+                  label {{_ 's3-enabled'}}
+                  input.wekan-form-control#s3-enabled(type="checkbox" checked="{{s3Enabled}}" disabled)
+                  small.form-text.text-muted {{_ 's3-enabled-description'}}
+                
+                .form-group
+                  label {{_ 's3-endpoint'}}
+                  input.wekan-form-control#s3-endpoint(type="text" value="{{s3Endpoint}}" readonly)
+                  small.form-text.text-muted {{_ 's3-endpoint-description'}}
+                
+                .form-group
+                  label {{_ 's3-bucket'}}
+                  input.wekan-form-control#s3-bucket(type="text" value="{{s3Bucket}}" readonly)
+                  small.form-text.text-muted {{_ 's3-bucket-description'}}
+                
+                .form-group
+                  label {{_ 's3-region'}}
+                  input.wekan-form-control#s3-region(type="text" value="{{s3Region}}" readonly)
+                  small.form-text.text-muted {{_ 's3-region-description'}}
+                
+                .form-group
+                  label {{_ 's3-access-key'}}
+                  input.wekan-form-control#s3-access-key(type="text" placeholder="{{_ 's3-access-key-placeholder'}}" readonly)
+                  small.form-text.text-muted {{_ 's3-access-key-description'}}
+                
+                .form-group
+                  label {{_ 's3-secret-key'}}
+                  input.wekan-form-control#s3-secret-key(type="password" placeholder="{{_ 's3-secret-key-placeholder'}}")
+                  small.form-text.text-muted {{_ 's3-secret-key-description'}}
+                
+                .form-group
+                  label {{_ 's3-ssl-enabled'}}
+                  input.wekan-form-control#s3-ssl-enabled(type="checkbox" checked="{{s3SslEnabled}}" disabled)
+                  small.form-text.text-muted {{_ 's3-ssl-enabled-description'}}
+                
+                .form-group
+                  label {{_ 's3-port'}}
+                  input.wekan-form-control#s3-port(type="number" value="{{s3Port}}" readonly)
+                  small.form-text.text-muted {{_ 's3-port-description'}}
+                
+                .form-group
+                  button.js-test-s3-connection.btn.btn-secondary {{_ 'test-s3-connection'}}
+                  button.js-save-s3-settings.btn.btn-primary {{_ 'save-s3-settings'}}
+          else if isCronSettings
+            ul#cron-setting.setting-detail
+              li
+                h3 {{_ 'cron-migrations'}}
+                .form-group
+                  label {{_ 'migration-status'}}
+                  .status-indicator
+                    span.status-label {{_ 'status'}}:
+                    span.status-value {{migrationStatus}}
+                  .progress-section
+                    .progress
+                      .progress-bar(role="progressbar" style="width: {{migrationProgress}}%" aria-valuenow="{{migrationProgress}}" aria-valuemin="0" aria-valuemax="100") 
+                        | {{migrationProgress}}%
+                    .progress-text
+                      | {{migrationProgress}}% {{_ 'complete'}}
+                
+                .form-group
+                  button.js-start-all-migrations.btn.btn-primary {{_ 'start-all-migrations'}}
+                  button.js-pause-all-migrations.btn.btn-warning {{_ 'pause-all-migrations'}}
+                  button.js-stop-all-migrations.btn.btn-danger {{_ 'stop-all-migrations'}}
+              
+              li
+                h3 {{_ 'board-operations'}}
+                .form-group
+                  label {{_ 'scheduled-board-operations'}}
+                  button.js-schedule-board-cleanup.btn.btn-primary {{_ 'schedule-board-cleanup'}}
+                  button.js-schedule-board-archive.btn.btn-warning {{_ 'schedule-board-archive'}}
+                  button.js-schedule-board-backup.btn.btn-info {{_ 'schedule-board-backup'}}
+              
+              li
+                h3 {{_ 'cron-jobs'}}
+                .form-group
+                  label {{_ 'active-cron-jobs'}}
+                  each cronJobs
+                    .job-item
+                      .job-info
+                        .job-name {{name}}
+                        .job-schedule {{schedule}}
+                        .job-description {{description}}
+                      .job-actions
+                        button.js-pause-job.btn.btn-sm.btn-warning(data-job-id="{{_id}}") {{_ 'pause'}}
+                        button.js-delete-job.btn.btn-sm.btn-danger(data-job-id="{{_id}}") {{_ 'delete'}}
+                  .add-job-section
+                    button.js-add-cron-job.btn.btn-success {{_ 'add-cron-job'}}
+          else if isGeneralSetting
             +general
-          else if emailSetting.get
+          else if isEmailSetting
             unless isSandstorm
               +email
-          else if accountSetting.get
+          else if isAccountSetting
             +accountSettings
-          else if tableVisibilityModeSetting.get
+          else if isTableVisibilityModeSetting
             +tableVisibilityModeSettings
-          else if announcementSetting.get
+          else if isAnnouncementSetting
             +announcementSettings
-          else if accessibilitySetting.get
+          else if isAccessibilitySetting
             +accessibilitySettings
-          else if layoutSetting.get
+          else if isLayoutSetting
             +layoutSettings
-          else if webhookSetting.get
+          else if isWebhookSetting
             +webhookSettings
 
 template(name="webhookSettings")
@@ -171,6 +332,8 @@ template(name='accountSettings')
         label {{_ 'no'}}
       button.js-accounts-save.primary {{_ 'save'}}
 
+    // Brute force lockout settings moved to People/Locked Users section
+
 template(name='announcementSettings')
   ul#announcement-setting.setting-detail
     li
@@ -190,23 +353,21 @@ template(name='announcementSettings')
 template(name='accessibilitySettings')
   ul#accessibility-setting.setting-detail
     li
+      a(href="/accessibility" style="text-decoration: underline; color: blue;") {{_ 'accessibility'}}
+    li
       a.flex.js-toggle-accessibility
         .materialCheckBox(class="{{#if currentAccessibility.enabled}}is-checked{{/if}}")
 
-        span {{_ 'admin-accessibility-active'}}
-    li
-      .title {{_ 'accessibility-title'}}
-      .form-group
-        input.wekan-form-control#accessibility-title(type="text", placeholder="" value="{{currentSetting.accessibilityTitle}}")
+        span {{_ 'accessibility-page-enabled'}}
     li
       .accessibility-content(class="{{#if currentAccessibility.enabled}}{{else}}hide{{/if}}")
         ul
           li
-            .title {{_ 'admin-accessibility-title'}}
-            textarea#admin-accessibility.wekan-form-control= currentAccessibility.accessibilityTitle
+            .title {{_ 'accessibility-title'}}
+            textarea#admin-accessibility-title.wekan-form-control= currentAccessibility.title
           li
-            .title {{_ 'admin-accessibility-content'}}
-            textarea#admin-accessibility.wekan-form-control= currentAccessibility.accessibilityContent
+            .title {{_ 'accessibility-content'}}
+            textarea#admin-accessibility-content.wekan-form-control= currentAccessibility.body
           li
             button.js-accessibility-save.primary {{_ 'save'}}
 

@@ -331,6 +331,19 @@ Boards.attachSchema(
       optional: true,
       defaultValue: null,
     },
+    migrationVersion: {
+      /**
+       * The migration version of the board structure.
+       * New boards are created with the latest version and don't need migration.
+       */
+      type: Number,
+      // eslint-disable-next-line consistent-return
+      autoValue() {
+        if (this.isInsert && !this.isSet) {
+          return 1; // Latest migration version for new boards
+        }
+      },
+    },
 
     subtasksDefaultListId: {
       /**
@@ -413,7 +426,7 @@ Boards.attachSchema(
        * Does the board allows cover attachment on minicard?
        */
       type: Boolean,
-      defaultValue: false,
+      defaultValue: true,
     },
 
     allowsBadgeAttachmentOnMinicard: {
@@ -512,12 +525,20 @@ Boards.attachSchema(
       defaultValue: true,
     },
 
+
     allowsAssignedBy: {
       /**
        * Does the board allows requested by?
        */
       type: Boolean,
       defaultValue: true,
+    },
+    allowsShowListsOnMinicard: {
+      /**
+       * Does the board allow showing list names on all minicards?
+       */
+      type: Boolean,
+      defaultValue: false,
     },
 
     allowsReceivedDate: {
@@ -757,6 +778,11 @@ Boards.helpers({
     return this.permission === 'public';
   },
 
+  hasSharedListsConverted() {
+    return this.hasSharedListsConverted === true;
+  },
+
+
   cards() {
     const ret = ReactiveCache.getCards(
       { boardId: this._id, archived: false },
@@ -783,7 +809,12 @@ Boards.helpers({
   },
 
   draggableLists() {
-    return ReactiveCache.getLists({ boardId: this._id }, { sort: { sort: 1 } });
+    return ReactiveCache.getLists(
+      {
+        boardId: this._id,
+      },
+      { sort: { sort: 1 } }
+    );
   },
 
   /** returns the last list
@@ -1108,13 +1139,13 @@ Boards.helpers({
         permission: this.permission,
         members: this.members,
         color: this.color,
-        description: TAPi18n.__('default-subtasks-board', {
+        description: TAPi18n && TAPi18n.i18n ? TAPi18n.__('default-subtasks-board', {
           board: this.title,
-        }),
+        }) : `Default subtasks board for ${this.title}`,
       });
 
       Swimlanes.insert({
-        title: TAPi18n.__('default'),
+        title: TAPi18n && TAPi18n.i18n ? TAPi18n.__('default') : 'Default',
         boardId: this.subtasksDefaultBoardId,
       });
       Boards.update(this._id, {
@@ -1141,13 +1172,13 @@ Boards.helpers({
         permission: this.permission,
         members: this.members,
         color: this.color,
-        description: TAPi18n.__('default-dates-board', {
+        description: TAPi18n && TAPi18n.i18n ? TAPi18n.__('default-dates-board', {
           board: this.title,
-        }),
+        }) : `Default dates board for ${this.title}`,
       });
 
       Swimlanes.insert({
-        title: TAPi18n.__('default'),
+        title: TAPi18n && TAPi18n.i18n ? TAPi18n.__('default') : 'Default',
         boardId: this.dateSettingsDefaultBoardId,
       });
       Boards.update(this._id, {
@@ -1169,8 +1200,9 @@ Boards.helpers({
       this.subtasksDefaultListId === undefined
     ) {
       this.subtasksDefaultListId = Lists.insert({
-        title: TAPi18n.__('queue'),
+        title: TAPi18n && TAPi18n.i18n ? TAPi18n.__('queue') : 'Queue',
         boardId: this._id,
+        swimlaneId: this.getDefaultSwimline()._id, // Set default swimlane for subtasks list
       });
       this.setSubtasksDefaultListId(this.subtasksDefaultListId);
     }
@@ -1187,8 +1219,9 @@ Boards.helpers({
       this.dateSettingsDefaultListId === undefined
     ) {
       this.dateSettingsDefaultListId = Lists.insert({
-        title: TAPi18n.__('queue'),
+        title: TAPi18n && TAPi18n.i18n ? TAPi18n.__('queue') : 'Queue',
         boardId: this._id,
+        swimlaneId: this.getDefaultSwimline()._id, // Set default swimlane for date settings list
       });
       this.setDateSettingsDefaultListId(this.dateSettingsDefaultListId);
     }
@@ -1202,11 +1235,20 @@ Boards.helpers({
   getDefaultSwimline() {
     let result = ReactiveCache.getSwimlane({ boardId: this._id });
     if (result === undefined) {
-      Swimlanes.insert({
-        title: TAPi18n.__('default'),
-        boardId: this._id,
-      });
-      result = ReactiveCache.getSwimlane({ boardId: this._id });
+      // Check if any swimlane exists for this board to avoid duplicates
+      const existingSwimlanes = ReactiveCache.getSwimlanes({ boardId: this._id });
+      if (existingSwimlanes.length > 0) {
+        // Use the first existing swimlane
+        result = existingSwimlanes[0];
+      } else {
+        // Use fallback title if i18n is not available (e.g., during migration)
+        const title = TAPi18n && TAPi18n.i18n ? TAPi18n.__('default') : 'Default';
+        Swimlanes.insert({
+          title: title,
+          boardId: this._id,
+        });
+        result = ReactiveCache.getSwimlane({ boardId: this._id });
+      }
     }
     return result;
   },
@@ -1453,6 +1495,10 @@ Boards.mutations({
     return { $set: { allowsAssignedBy } };
   },
 
+  setAllowsShowListsOnMinicard(allowsShowListsOnMinicard) {
+    return { $set: { allowsShowListsOnMinicard } };
+  },
+
   setAllowsRequestedBy(allowsRequestedBy) {
     return { $set: { allowsRequestedBy } };
   },
@@ -1464,6 +1510,7 @@ Boards.mutations({
   setAllowsShowLists(allowsShowLists) {
     return { $set: { allowsShowLists } };
   },
+
 
   setAllowsAttachments(allowsAttachments) {
     return { $set: { allowsAttachments } };
@@ -2162,9 +2209,10 @@ if (Meteor.isServer) {
         ],
         permission: req.body.permission || 'private',
         color: req.body.color || 'belize',
+        migrationVersion: 1, // Latest version - no migration needed
       });
       const swimlaneId = Swimlanes.insert({
-        title: TAPi18n.__('default'),
+        title: TAPi18n && TAPi18n.i18n ? TAPi18n.__('default') : 'Default',
         boardId: id,
       });
       JsonRoutes.sendResult(res, {

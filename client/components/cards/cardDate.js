@@ -1,17 +1,38 @@
-import moment from 'moment/min/moment-with-locales';
 import { TAPi18n } from '/imports/i18n';
 import { DatePicker } from '/client/lib/datepicker';
+import { 
+  formatDateTime, 
+  formatDate, 
+  formatDateByUserPreference,
+  formatTime, 
+  getISOWeek, 
+  isValidDate, 
+  isBefore, 
+  isAfter, 
+  isSame, 
+  add, 
+  subtract, 
+  startOf, 
+  endOf, 
+  format, 
+  parseDate, 
+  now, 
+  createDate, 
+  fromNow, 
+  calendar,
+  diff
+} from '/imports/lib/dateUtils';
 
 // editCardReceivedDatePopup
 (class extends DatePicker {
   onCreated() {
-    super.onCreated(moment().format('YYYY-MM-DD HH:mm'));
+    super.onCreated(formatDateTime(now()));
     this.data().getReceived() &&
-      this.date.set(moment(this.data().getReceived()));
+      this.date.set(new Date(this.data().getReceived()));
   }
 
   _storeDate(date) {
-    this.card.setReceived(moment(date).format('YYYY-MM-DD HH:mm'));
+    this.card.setReceived(formatDateTime(date));
   }
 
   _deleteDate() {
@@ -22,22 +43,17 @@ import { DatePicker } from '/client/lib/datepicker';
 // editCardStartDatePopup
 (class extends DatePicker {
   onCreated() {
-    super.onCreated(moment().format('YYYY-MM-DD HH:mm'));
-    this.data().getStart() && this.date.set(moment(this.data().getStart()));
+    super.onCreated(formatDateTime(now()));
+    this.data().getStart() && this.date.set(new Date(this.data().getStart()));
   }
 
   onRendered() {
     super.onRendered();
-    if (moment.isDate(this.card.getReceived())) {
-      this.$('.js-datepicker').datepicker(
-        'setStartDate',
-        this.card.getReceived(),
-      );
-    }
+    // DatePicker base class handles initialization with native HTML inputs
   }
 
   _storeDate(date) {
-    this.card.setStart(moment(date).format('YYYY-MM-DD HH:mm'));
+    this.card.setStart(formatDateTime(date));
   }
 
   _deleteDate() {
@@ -49,18 +65,16 @@ import { DatePicker } from '/client/lib/datepicker';
 (class extends DatePicker {
   onCreated() {
     super.onCreated('1970-01-01 17:00:00');
-    this.data().getDue() && this.date.set(moment(this.data().getDue()));
+    this.data().getDue() && this.date.set(new Date(this.data().getDue()));
   }
 
   onRendered() {
     super.onRendered();
-    if (moment.isDate(this.card.getStart())) {
-      this.$('.js-datepicker').datepicker('setStartDate', this.card.getStart());
-    }
+    // DatePicker base class handles initialization with native HTML inputs
   }
 
   _storeDate(date) {
-    this.card.setDue(moment(date).format('YYYY-MM-DD HH:mm'));
+    this.card.setDue(formatDateTime(date));
   }
 
   _deleteDate() {
@@ -71,19 +85,17 @@ import { DatePicker } from '/client/lib/datepicker';
 // editCardEndDatePopup
 (class extends DatePicker {
   onCreated() {
-    super.onCreated(moment().format('YYYY-MM-DD HH:mm'));
-    this.data().getEnd() && this.date.set(moment(this.data().getEnd()));
+    super.onCreated(formatDateTime(now()));
+    this.data().getEnd() && this.date.set(new Date(this.data().getEnd()));
   }
 
   onRendered() {
     super.onRendered();
-    if (moment.isDate(this.card.getStart())) {
-      this.$('.js-datepicker').datepicker('setStartDate', this.card.getStart());
-    }
+    // DatePicker base class handles initialization with native HTML inputs
   }
 
   _storeDate(date) {
-    this.card.setEnd(moment(date).format('YYYY-MM-DD HH:mm'));
+    this.card.setEnd(formatDateTime(date));
   }
 
   _deleteDate() {
@@ -100,27 +112,29 @@ const CardDate = BlazeComponent.extendComponent({
   onCreated() {
     const self = this;
     self.date = ReactiveVar();
-    self.now = ReactiveVar(moment());
+    self.now = ReactiveVar(now());
     window.setInterval(() => {
-      self.now.set(moment());
+      self.now.set(now());
     }, 60000);
   },
 
   showWeek() {
-    return this.date.get().week().toString();
+    return getISOWeek(this.date.get()).toString();
   },
 
   showWeekOfYear() {
-    return ReactiveCache.getCurrentUser().isShowWeekOfYear();
+    const user = ReactiveCache.getCurrentUser();
+    if (!user) {
+      // For non-logged-in users, week of year is not shown
+      return false;
+    }
+    return user.isShowWeekOfYear();
   },
 
   showDate() {
-    // this will start working once mquandalle:moment
-    // is updated to at least moment.js 2.10.5
-    // until then, the date is displayed in the "L" format
-    return this.date.get().calendar(null, {
-      sameElse: 'llll',
-    });
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    return formatDateByUserPreference(this.date.get(), dateFormat, true);
   },
 
   showISODate() {
@@ -133,7 +147,7 @@ class CardReceivedDate extends CardDate {
     super.onCreated();
     const self = this;
     self.autorun(() => {
-      self.date.set(moment(self.data().getReceived()));
+      self.date.set(new Date(self.data().getReceived()));
     });
   }
 
@@ -143,21 +157,26 @@ class CardReceivedDate extends CardDate {
     const endAt = this.data().getEnd();
     const startAt = this.data().getStart();
     const theDate = this.date.get();
-    // if dueAt, endAt and startAt exist & are > receivedAt, receivedAt doesn't need to be flagged
+    const now = this.now.get();
+    
+    // Received date logic: if received date is after start, due, or end dates, it's overdue
     if (
-      (startAt && theDate.isAfter(startAt)) ||
-      (endAt && theDate.isAfter(endAt)) ||
-      (dueAt && theDate.isAfter(dueAt))
-    )
-      classes += 'long-overdue';
-    else classes += 'current';
+      (startAt && isAfter(theDate, startAt)) ||
+      (endAt && isAfter(theDate, endAt)) ||
+      (dueAt && isAfter(theDate, dueAt))
+    ) {
+      classes += 'overdue';
+    } else {
+      classes += 'not-due';
+    }
     return classes;
   }
 
   showTitle() {
-    return `${TAPi18n.__('card-received-on')} ${this.date
-      .get()
-      .format('LLLL')}`;
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    const formattedDate = formatDateByUserPreference(this.date.get(), dateFormat, true);
+    return `${TAPi18n.__('card-received-on')} ${formattedDate}`;
   }
 
   events() {
@@ -173,26 +192,35 @@ class CardStartDate extends CardDate {
     super.onCreated();
     const self = this;
     self.autorun(() => {
-      self.date.set(moment(self.data().getStart()));
+      self.date.set(new Date(self.data().getStart()));
     });
   }
 
   classes() {
-    let classes = 'start-date' + ' ';
+    let classes = 'start-date ';
     const dueAt = this.data().getDue();
     const endAt = this.data().getEnd();
     const theDate = this.date.get();
     const now = this.now.get();
-    // if dueAt or endAt exist & are > startAt, startAt doesn't need to be flagged
-    if ((endAt && theDate.isAfter(endAt)) || (dueAt && theDate.isAfter(dueAt)))
-      classes += 'long-overdue';
-    else if (theDate.isAfter(now)) classes += '';
-    else classes += 'current';
+    
+    // Start date logic: if start date is after due or end dates, it's overdue
+    if ((endAt && isAfter(theDate, endAt)) || (dueAt && isAfter(theDate, dueAt))) {
+      classes += 'overdue';
+    } else if (isAfter(theDate, now)) {
+      // Start date is in the future - not due yet
+      classes += 'not-due';
+    } else {
+      // Start date is today or in the past - current/active
+      classes += 'current';
+    }
     return classes;
   }
 
   showTitle() {
-    return `${TAPi18n.__('card-start-on')} ${this.date.get().format('LLLL')}`;
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    const formattedDate = formatDateByUserPreference(this.date.get(), dateFormat, true);
+    return `${TAPi18n.__('card-start-on')} ${formattedDate}`;
   }
 
   events() {
@@ -208,27 +236,48 @@ class CardDueDate extends CardDate {
     super.onCreated();
     const self = this;
     self.autorun(() => {
-      self.date.set(moment(self.data().getDue()));
+      self.date.set(new Date(self.data().getDue()));
     });
   }
 
   classes() {
-    let classes = 'due-date' + ' ';
+    let classes = 'due-date ';
     const endAt = this.data().getEnd();
     const theDate = this.date.get();
     const now = this.now.get();
-    // if the due date is after the end date, green - done early
-    if (endAt && theDate.isAfter(endAt)) classes += 'current';
-    // if there is an end date, don't need to flag the due date
-    else if (endAt) classes += '';
-    else if (now.diff(theDate, 'days') >= 2) classes += 'long-overdue';
-    else if (now.diff(theDate, 'minute') >= 0) classes += 'due';
-    else if (now.diff(theDate, 'days') >= -1) classes += 'almost-due';
+    
+    // If there's an end date and it's before the due date, task is completed early
+    if (endAt && isBefore(endAt, theDate)) {
+      classes += 'completed-early';
+    }
+    // If there's an end date, don't show due date status since task is completed
+    else if (endAt) {
+      classes += 'completed';
+    }
+    // Due date logic based on current time
+    else {
+      const daysDiff = diff(theDate, now, 'days');
+      
+      if (daysDiff < 0) {
+        // Due date is in the past - overdue
+        classes += 'overdue';
+      } else if (daysDiff <= 1) {
+        // Due today or tomorrow - due soon
+        classes += 'due-soon';
+      } else {
+        // Due date is more than 1 day away - not due yet
+        classes += 'not-due';
+      }
+    }
+    
     return classes;
   }
 
   showTitle() {
-    return `${TAPi18n.__('card-due-on')} ${this.date.get().format('LLLL')}`;
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    const formattedDate = formatDateByUserPreference(this.date.get(), dateFormat, true);
+    return `${TAPi18n.__('card-due-on')} ${formattedDate}`;
   }
 
   events() {
@@ -244,22 +293,33 @@ class CardEndDate extends CardDate {
     super.onCreated();
     const self = this;
     self.autorun(() => {
-      self.date.set(moment(self.data().getEnd()));
+      self.date.set(new Date(self.data().getEnd()));
     });
   }
 
   classes() {
-    let classes = 'end-date' + ' ';
+    let classes = 'end-date ';
     const dueAt = this.data().getDue();
     const theDate = this.date.get();
-    if (!dueAt) classes += '';
-    else if (theDate.isBefore(dueAt)) classes += 'current';
-    else if (theDate.isAfter(dueAt)) classes += 'due';
+    
+    if (!dueAt) {
+      // No due date set - just show as completed
+      classes += 'completed';
+    } else if (isBefore(theDate, dueAt)) {
+      // End date is before due date - completed early
+      classes += 'completed-early';
+    } else if (isAfter(theDate, dueAt)) {
+      // End date is after due date - completed late
+      classes += 'completed-late';
+    } else {
+      // End date equals due date - completed on time
+      classes += 'completed-on-time';
+    }
     return classes;
   }
 
   showTitle() {
-    return `${TAPi18n.__('card-end-on')} ${this.date.get().format('LLLL')}`;
+    return `${TAPi18n.__('card-end-on')} ${format(this.date.get(), 'LLLL')}`;
   }
 
   events() {
@@ -279,16 +339,21 @@ class CardCustomFieldDate extends CardDate {
     super.onCreated();
     const self = this;
     self.autorun(() => {
-      self.date.set(moment(self.data().value));
+      self.date.set(new Date(self.data().value));
     });
   }
 
   showWeek() {
-    return this.date.get().week().toString();
+    return getISOWeek(this.date.get()).toString();
   }
 
   showWeekOfYear() {
-    return ReactiveCache.getCurrentUser().isShowWeekOfYear();
+    const user = ReactiveCache.getCurrentUser();
+    if (!user) {
+      // For non-logged-in users, week of year is not shown
+      return false;
+    }
+    return user.isShowWeekOfYear();
   }
 
   showDate() {
@@ -301,7 +366,10 @@ class CardCustomFieldDate extends CardDate {
   }
 
   showTitle() {
-    return `${this.date.get().format('LLLL')}`;
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    const formattedDate = formatDateByUserPreference(this.date.get(), dateFormat, true);
+    return `${formattedDate}`;
   }
 
   classes() {
@@ -315,32 +383,62 @@ class CardCustomFieldDate extends CardDate {
 CardCustomFieldDate.register('cardCustomFieldDate');
 
 (class extends CardReceivedDate {
+  template() {
+    return 'minicardReceivedDate';
+  }
+  
   showDate() {
-    return this.date.get().format('L');
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    return formatDateByUserPreference(this.date.get(), dateFormat, true);
   }
 }.register('minicardReceivedDate'));
 
 (class extends CardStartDate {
+  template() {
+    return 'minicardStartDate';
+  }
+  
   showDate() {
-    return this.date.get().format('YYYY-MM-DD HH:mm');
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    return formatDateByUserPreference(this.date.get(), dateFormat, true);
   }
 }.register('minicardStartDate'));
 
 (class extends CardDueDate {
+  template() {
+    return 'minicardDueDate';
+  }
+  
   showDate() {
-    return this.date.get().format('YYYY-MM-DD HH:mm');
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    return formatDateByUserPreference(this.date.get(), dateFormat, true);
   }
 }.register('minicardDueDate'));
 
 (class extends CardEndDate {
+  template() {
+    return 'minicardEndDate';
+  }
+  
   showDate() {
-    return this.date.get().format('YYYY-MM-DD HH:mm');
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    return formatDateByUserPreference(this.date.get(), dateFormat, true);
   }
 }.register('minicardEndDate'));
 
 (class extends CardCustomFieldDate {
+  template() {
+    return 'minicardCustomFieldDate';
+  }
+  
   showDate() {
-    return this.date.get().format('L');
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    return formatDateByUserPreference(this.date.get(), dateFormat, true);
   }
 }.register('minicardCustomFieldDate'));
 
@@ -349,7 +447,7 @@ class VoteEndDate extends CardDate {
     super.onCreated();
     const self = this;
     self.autorun(() => {
-      self.date.set(moment(self.data().getVoteEnd()));
+      self.date.set(new Date(self.data().getVoteEnd()));
     });
   }
   classes() {
@@ -357,10 +455,12 @@ class VoteEndDate extends CardDate {
     return classes;
   }
   showDate() {
-    return this.date.get().format('L LT');
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    return formatDateByUserPreference(this.date.get(), dateFormat, true);
   }
   showTitle() {
-    return `${TAPi18n.__('card-end-on')} ${this.date.get().format('LLLL')}`;
+    return `${TAPi18n.__('card-end-on')} ${this.date.get().toLocaleString()}`;
   }
 
   events() {
@@ -376,7 +476,7 @@ class PokerEndDate extends CardDate {
     super.onCreated();
     const self = this;
     self.autorun(() => {
-      self.date.set(moment(self.data().getPokerEnd()));
+      self.date.set(new Date(self.data().getPokerEnd()));
     });
   }
   classes() {
@@ -384,10 +484,12 @@ class PokerEndDate extends CardDate {
     return classes;
   }
   showDate() {
-    return this.date.get().format('l LT');
+    const currentUser = ReactiveCache.getCurrentUser();
+    const dateFormat = currentUser ? currentUser.getDateFormat() : 'YYYY-MM-DD';
+    return formatDateByUserPreference(this.date.get(), dateFormat, true);
   }
   showTitle() {
-    return `${TAPi18n.__('card-end-on')} ${this.date.get().format('LLLL')}`;
+    return `${TAPi18n.__('card-end-on')} ${format(this.date.get(), 'LLLL')}`;
   }
 
   events() {

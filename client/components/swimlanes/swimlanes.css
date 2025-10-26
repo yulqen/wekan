@@ -8,20 +8,21 @@
   flex-direction: row;
   overflow: auto;
   max-height: 100%;
+  position: relative;
 }
 .swimlane-header-menu .swimlane-header-collapse-down {
   font-size: 50%;
   color: #a6a6a6;
   position: absolute;
-  top: 5px;
-  left: 100px;
+  top: 0.7vh;
+  left: 13vw;
 }
 .swimlane-header-menu .swimlane-header-collapse-up {
   font-size: 50%;
   color: #a6a6a6;
   position: absolute;
-  bottom: 5px;
-  left: 100px;
+  bottom: 0.7vh;
+  left: 13vw;
 }
 .swimlane-header-menu .swimlane-header-uncollapse-up {
   font-size: 50%;
@@ -35,10 +36,10 @@
   background-color: rgba(0,0,0,0.2);
   border-color: transparent;
   box-shadow: none;
-  height: 100px;
+  height: 15vh;
 }
 .swimlane.ui-sortable-helper {
-  box-shadow: -2px 2px 8px rgba(0,0,0,0.3), 0 0 1px rgba(0,0,0,0.5);
+  box-shadow: -0.3vw 0.3vh 1vh rgba(0,0,0,0.3), 0 0 0.1vw rgba(0,0,0,0.5);
   transform: rotate(2deg);
   cursor: grabbing;
 }
@@ -50,23 +51,33 @@
   flex-direction: row;
   flex: 1 0 100%;
   background-color: #ccc;
+  width: 100%;
+  min-width: 100%;
+  position: relative;
+  overflow: hidden;
+  min-height: 33px;
 }
 .swimlane .swimlane-header-wrap .swimlane-header {
   font-size: 14px;
   padding: 5px 5px;
   font-weight: bold;
-  min-height: 9px;
+  min-height: 33px;
   width: 100%;
   overflow: hidden;
   -o-text-overflow: ellipsis;
   text-overflow: ellipsis;
   word-wrap: break-word;
   text-align: center;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
 }
 .swimlane .swimlane-header-wrap .swimlane-header-menu {
   position: absolute;
   padding: 5px 5px;
   font-size: 22px;
+  z-index: 20;
+  pointer-events: auto;
 }
 @media print {
   .swimlane .swimlane-header-wrap .swimlane-header-menu {
@@ -86,17 +97,33 @@
   position: absolute;
   padding: 7px;
   top: 50%;
-  transform: translateY(-50%);
   left: 230px;
-  font-size: 18px;
+  font-size: clamp(16px, 3vw, 20px);
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: move;
+  z-index: 15;
+  pointer-events: auto;
 }
 .swimlane .swimlane-header-wrap .swimlane-header-miniscreen-handle {
   position: absolute;
   padding: 7px;
   top: 50%;
   transform: translateY(-50%);
-  left: 87vw;
+  right: 10px;
   font-size: 24px;
+  cursor: move;
+  z-index: 15;
+  pointer-events: auto;
+}
+
+/* Safety: ensure wrapper is interactive and above list content */
+.swimlane .swimlane-header-wrap {
+  position: relative;
+  z-index: 9;
+  pointer-events: auto;
 }
 #js-swimlane-height-edit .swimlane-height-error {
   display: none;
@@ -207,4 +234,107 @@
 .swimlane-indigo {
   background: #4b0082 !important;
   color: #fff !important;
+}
+
+/* Swimlane resize handle */
+.swimlane-resize-handle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: transparent;
+  cursor: row-resize;
+  z-index: 20;
+  border-top: 2px solid transparent;
+  transition: all 0.2s ease;
+  border-radius: 2px;
+  /* Ensure the handle is clickable */
+  pointer-events: auto;
+}
+
+/* Show resize handle only on hover */
+.swimlane:hover .swimlane-resize-handle {
+  background: rgba(0, 0, 0, 0.1);
+  border-top-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Add a subtle resize indicator line at the bottom of swimlane on hover */
+.swimlane:hover .swimlane-resize-handle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(0, 123, 255, 0.3);
+  z-index: 21;
+  transition: all 0.2s ease;
+  border-radius: 1px;
+}
+
+/* Make the indicator line more prominent when hovering over the resize handle */
+.swimlane-resize-handle:hover::after {
+  background: rgba(0, 123, 255, 0.6) !important;
+  height: 3px !important;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.2);
+}
+
+.swimlane-resize-handle:hover {
+  background: rgba(0, 123, 255, 0.4) !important;
+  border-top-color: #0079bf !important;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+.swimlane-resize-handle:active {
+  background: rgba(0, 123, 255, 0.6) !important;
+  border-top-color: #0079bf !important;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.4);
+}
+
+/* Add a subtle indicator line */
+.swimlane-resize-handle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 2px;
+  background: rgba(0, 123, 255, 0.6);
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.swimlane-resize-handle:hover::before {
+  opacity: 1;
+}
+
+/* Visual feedback during resize */
+.swimlane.swimlane-resizing {
+  transition: none !important;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+  /* Ensure the swimlane maintains its new height during resize */
+  flex: none !important;
+  flex-basis: auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  /* Override any conflicting layout properties */
+  display: flex !important;
+  position: relative !important;
+  /* Force height to be respected */
+  height: var(--swimlane-height, auto) !important;
+  min-height: var(--swimlane-height, auto) !important;
+  max-height: var(--swimlane-height, auto) !important;
+  /* Ensure the height is applied immediately */
+  overflow: visible !important;
+}
+
+body.swimlane-resizing-active {
+  cursor: row-resize !important;
+}
+
+body.swimlane-resizing-active * {
+  cursor: row-resize !important;
 }

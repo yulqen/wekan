@@ -1,6 +1,7 @@
 import { TAPi18n } from '/imports/i18n';
 
 const passwordField = AccountsTemplates.removeField('password');
+passwordField.autocomplete = 'current-password';
 const emailField = AccountsTemplates.removeField('email');
 let disableRegistration = false;
 let disableForgotPassword = false;
@@ -57,9 +58,18 @@ AccountsTemplates.addFields([
     displayName: 'username',
     required: true,
     minLength: 2,
+    autocomplete: 'username',
   },
   emailField,
   passwordField,
+  {
+    _id: 'password_again',
+    type: 'password',
+    displayName: 'Password (again)',
+    required: true,
+    minLength: 6,
+    autocomplete: 'new-password',
+  },
   {
     _id: 'invitationcode',
     type: 'text',

@@ -1,7 +1,23 @@
 #!/bin/bash
 
+# MongoDB Control Script
+# Starts MongoDB 7.x server only
+
 # get wekan/mongo settings
+echo "Reading snap settings..."
 source $SNAP/bin/wekan-read-settings
+
+# Debug: Show what we got from snap settings
+echo "Snap settings loaded:"
+echo "  MONGODB_BIND_IP: '${MONGODB_BIND_IP}'"
+echo "  MONGODB_PORT: '${MONGODB_PORT}'"
+echo "  MONGODB_BIND_UNIX_SOCKET: '${MONGODB_BIND_UNIX_SOCKET}'"
+
+# Debug: Check snap settings directly
+echo "Direct snap settings check:"
+echo "  mongodb-port: $(snapctl get mongodb-port 2>/dev/null || echo 'not set')"
+echo "  mongodb-bind-ip: $(snapctl get mongodb-bind-ip 2>/dev/null || echo 'not set')"
+echo "  mongodb-bind-unix-socket: $(snapctl get mongodb-bind-unix-socket 2>/dev/null || echo 'not set')"
 
 if [ "true" == "${DISABLE_MONGODB}" ]; then
     echo "mongodb is disabled. Stop service"
@@ -15,11 +31,7 @@ if [ -z "${LANG}" ]; then
 fi
 
 export LC_ALL=C
-# If CPU does not support AVX, use Qemu that supports AVX.
-# Migratemongo is at https://github.com/wekan/migratemongo
-# and at directory /snap/${SNAP_NAME}/current/migratemongo/avx
-# is bash scripts like mongod, mongosh check avx support and use Qemu if needed.
-export PATH=/snap/${SNAP_NAME}/current/migratemongo/avx:/snap/${SNAP_NAME}/current/usr/bin:/snap/${SNAP_NAME}/current/bin:${PATH}
+export PATH=/snap/${SNAP_NAME}/current/usr/bin:/snap/${SNAP_NAME}/current/bin:${PATH}
 export LD_LIBRARY_PATH=/snap/${SNAP_NAME}/current/lib:/snap/${SNAP_NAME}/current/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}
 
 # If temporary settings log exists, delete it
@@ -27,145 +39,95 @@ if [ -f ${SNAP_COMMON}/settings.log ]; then
     rm ${SNAP_COMMON}/settings.log
 fi
 
-#if test -f "$SNAP_COMMON/01-migrate-mongo3-to-mongo5.txt"; then
-#   touch "$SNAP_COMMON/01-migrate-mongo3-to-mongo5.txt"
-#   # Stop MongoDB
-#   touch "$SNAP_COMMON/02-disable-mongo.txt"
-#   snapctl stop --disable ${SNAP_NAME}.mongodb
-#   touch "$SNAP_COMMON/03-eval-stop-mongo.txt"
-#   mongo wekan --eval "db.getSiblingDB('admin').shutdownServer()" $BIND_OPTIONS
-#   # Start MongoDB 4.4
-#   touch "$SNAP_COMMON/04-start-mongo44.txt"
-#   $SNAP/mongo44bin/mongod --dbpath $SNAP_COMMON --logpath $SNAP_COMMON/02_mongodb_log_while_migrate.txt --logappend --journal $MONGO_URL --quiet
-#   # Wait MongoDB 4.4 to start
-#   touch "$SNAP_COMMON/05-wait-2s-mongo44-start.txt"
-#   sleep 2s
-#   # Dump Old MongoDB 3.x database
-#   touch "$SNAP_COMMON/06-dump-database.txt"
-#   (cd $SNAP_COMMON && mongodump --port ${MONGODB_PORT})
-#   # Stop MongoDB 4.4
-#   touch "$SNAP_COMMON/07-stop-mongo44.txt"
-#   $SNAP/mongo44bin/mongo wekan --eval "db.getSiblingDB('admin').shutdownServer()" $BIND_OPTIONS
-#   # Wait MongoDB 4.4 to stop
-#   touch "$SNAP_COMMON/08-wait-2s-mongo44-stop.txt"
-#   sleep 2s
-#   # Start MongoDB 5
-#   touch "$SNAP_COMMON/09-start-mongo5.txt"
-#   mongod --dbpath $SNAP_COMMON --logpath $SNAP_COMMON/10_mongodb_log_while_migrate.txt --logappend --journal $MONGO_URL --quiet
-#   # Restore database
-#   touch "$SNAP_COMMON/11-mongorestore-to-mongo5.txt"
-#   (cd $SNAP_COMMON && mongorestore --port ${MONGODB_PORT})
-#   # Wait 5s
-#   touch "$SNAP_COMMON/12-wait-5s-after-restore.txt"
-#   sleep 5s
-#   # Shutdown mongodb
-#   touch "$SNAP_COMMON/13-shutdown-mongodb.txt"
-#   mongo wekan --eval "db.getSiblingDB('admin').shutdownServer()" $BIND_OPTIONS
-#   touch "$SNAP_COMMON/14-wait-5s-after-mongo5-shutdown.txt"
-#   sleep 5s
-#   # Enable MongoDB 5
-#   touch "$SNAP_COMMON/15-enable-mongo-5.txt"
-#   snapctl start --enable ${SNAP_NAME}.mongodb
-#fi
-# When starting MongoDB, if logfile exist, delete it, because now uses syslog instead of logfile,
-# because syslog usually already has log rotation.
-# https://github.com/wekan/wekan-snap/issues/92
-#if test -f "$SNAP_COMMON/mongodb.log"; then
-#   rm -f "$SNAP_COMMON/mongodb.log"
-#fi
+# Set MongoDB log destination to snapcommon for log file detection
+export MONGO_LOG_DESTINATION="snapcommon"
 
-# Alternative: When starting MongoDB, and using logfile, truncate log to last 1000 lines of text.
-# 1) If file exists:
-#if test -f "$SNAP_COMMON/mongodb.log"; then
-#    # 2) Copy last 1000 lines to variable loglast1000lines.
-#    loglast1000lines=$(tail -1000 "$SNAP_COMMON/mongodb.log")
-#    # 3) Copy variable to replace original MongoDB log.
-#    echo "$loglast1000lines" > "$SNAP_COMMON/mongodb.log"
-#    # 4) Set variable to be empty.
-#    loglast1000lines=""
-#fi
+# Set MongoDB data directory
+export MONGO_DATA_DIR="${SNAP_COMMON}"
 
-if [ -z "${MONGO_URL}" ]; then
-
-    # start mongo deamon
-    BIND_OPTIONS=""
-    if [ "nill" != "${MONGODB_BIND_UNIX_SOCKET}" ] && [ "x" != "x${MONGODB_BIND_UNIX_SOCKET}" ]; then
-        BIND_OPTIONS+=" --unixSocketPrefix ${MONGODB_BIND_UNIX_SOCKET}"
-    fi
-    # Newest MongoDB uses --host or --bind_ip
-    if [ "x" != "x${MONGODB_BIND_IP}" ]; then
-        BIND_OPTIONS+=" --bind_ip $MONGODB_BIND_IP"
-    fi
-    if [ "x" != "x${MONGODB_PORT}" ]; then
-        BIND_OPTIONS+=" --port ${MONGODB_PORT}"
-    fi
-
-    if [ "syslog" == "${MONGO_LOG_DESTINATION}" ]; then
-        echo "Sending mongodb logs to syslog"
-        mongod --dbpath ${SNAP_COMMON} --syslog ${BIND_OPTIONS} --quiet
-        exit 0
-    fi
-
-    if [ "snapcommon" == "${MONGO_LOG_DESTINATION}" ]; then
-        echo "Sending mongodb logs to $SNAP_COMMON"
-        mongod --dbpath ${SNAP_COMMON} --logpath ${SNAP_COMMON}/mongodb.log --logappend ${BIND_OPTIONS} --quiet
-    fi
-
-    if [ "devnull" == "${MONGO_LOG_DESTINATION}" ]; then
-        echo "Sending mongodb logs to /dev/null"
-        mongod --dbpath ${SNAP_COMMON} --logpath /dev/null ${BIND_OPTIONS} --quiet
-    fi
-    #echo "mongodb log destination: ${MONGO_LOG_DESTINATION}" >> "${SNAP_COMMON}/settings.log"
-
-    # Disable MongoDB telemetry and free monitoring
-    /snap/${SNAP_NAME}/current/usr/bin/mongosh wekan --eval 'disableTelemetry();' --port ${MONGODB_PORT}
-    /snap/${SNAP_NAME}/current/usr/bin/mongosh wekan --eval 'db.disableFreeMonitoring();' --port ${MONGODB_PORT}
-
-    # Snap: Disable apparmor="DENIED" at syslog
-    # https://github.com/wekan/wekan/issues/4855
-    /snap/${SNAP_NAME}/current/usr/bin/mongosh wekan --eval 'db.adminCommand({ setParameter: 1, diagnosticDataCollectionEnabled: false});' --port ${MONGODB_PORT}
-
-    # Drop indexes on database upgrade, when starting MongoDB
-    #mongosh wekan --eval "db.getCollectionNames().forEach(function(col_name) { var coll = db.getCollection(col_name); coll.dropIndexes(); });" $BIND_OPTIONS
-
-    # Set MongoDB feature compatibility version
-    #mongosh wekan --eval 'db.adminCommand({ setFeatureCompatibilityVersion: "4.4" });' ${BIND_OPTIONS}
-
-    # Delete incomplete uploads so that they would not prevent starting WeKan
-    /snap/${SNAP_NAME}/current/usr/bin/mongosh wekan --eval 'db.getCollection("cfs.attachments.filerecord").find( { "uploadedAt": { "$exists": true }, "copies.attachments" : null,"failures.copies.attachments.doneTrying" : {"$ne" : true}});' --port ${MONGODB_PORT}
-
-else
-
-    if [ "syslog" == "${MONGO_LOG_DESTINATION}" ]; then
-        echo "Sending mongodb logs to syslog"
-        mongod --dbpath ${SNAP_COMMON} --syslog ${MONGO_URL} --quiet
-    fi
-
-    if [ "snapcommon" == "${MONGO_LOG_DESTINATION}" ]; then
-        echo "Sending mongodb logs to ${SNAP_COMMON}"
-        mongod --dbpath ${SNAP_COMMON} --logpath ${SNAP_COMMON}/mongodb.log --logappend ${MONGO_URL} --quiet
-    fi
-
-    if [ "devnull" == "${MONGO_LOG_DESTINATION}" ]; then
-        echo "Sending mongodb logs to /dev/null"
-        mongod --dbpath ${SNAP_COMMON} --logpath /dev/null ${MONGO_URL} --quiet
-    fi
-
-    # Disable MongoDB telemetry and free monitoring
-    /snap/${SNAP_NAME}/current/usr/bin/mongosh ${MONGO_URL} --eval 'disableTelemetry();'
-    /snap/${SNAP_NAME}/current/usr/bin/mongosh ${MONGO_URL} --eval 'db.disableFreeMonitoring();'
-
-    # Snap: Disable apparmor="DENIED" at syslog
-    # https://github.com/wekan/wekan/issues/4855
-    /snap/${SNAP_NAME}/current/usr/bin/mongosh ${MONGO_URL} --eval 'db.adminCommand({ setParameter: 1, diagnosticDataCollectionEnabled: false});'
-
-    # Drop indexes on database upgrade, when starting MongoDB
-    #mongosh wekan --eval "db.getCollectionNames().forEach(function(col_name) { var coll = db.getCollection(col_name); coll.dropIndexes(); });" $BIND_OPTIONS
-
-    # Set MongoDB feature compatibility version
-    #/snap/${SNAP_NAME}/current/usr/bin/mongosh ${MONGO_URL} --eval 'db.adminCommand({ setFeatureCompatibilityVersion: "4.4" });'
-
-    # Delete incomplete uploads so that they would not prevent starting WeKan
-    /snap/${SNAP_NAME}/current/usr/bin/mongosh ${MONGO_URL} --eval 'db.getCollection("cfs.attachments.filerecord").find( { "uploadedAt": { "$exists": true }, "copies.attachments" : null,"failures.copies.attachments.doneTrying" : {"$ne" : true}});'
-
+# Create MongoDB data directory if it doesn't exist
+if [ ! -d "$MONGO_DATA_DIR" ]; then
+    mkdir -p "$MONGO_DATA_DIR"
+    chmod 755 "$MONGO_DATA_DIR"
 fi
+
+# Set MongoDB log file path
+export MONGO_LOG_FILE="${SNAP_COMMON}/mongodb.log"
+
+# Build bind options from snap settings
+BIND_OPTIONS=""
+if [ "nill" != "${MONGODB_BIND_UNIX_SOCKET}" ] && [ -n "${MONGODB_BIND_UNIX_SOCKET}" ]; then
+    BIND_OPTIONS+=" --unixSocketPrefix ${MONGODB_BIND_UNIX_SOCKET}"
+fi
+if [ -n "${MONGODB_BIND_IP}" ]; then
+    BIND_OPTIONS+=" --bind_ip ${MONGODB_BIND_IP}"
+else
+    BIND_OPTIONS+=" --bind_ip 127.0.0.1"
+fi
+if [ -n "${MONGODB_PORT}" ]; then
+    BIND_OPTIONS+=" --port ${MONGODB_PORT}"
+else
+    BIND_OPTIONS+=" --port 27019"
+fi
+
+# Debug: Show what settings we're using
+echo "MongoDB settings:"
+echo "  MONGODB_BIND_IP: ${MONGODB_BIND_IP:-127.0.0.1}"
+echo "  MONGODB_PORT: ${MONGODB_PORT:-27017}"
+echo "  MONGODB_BIND_UNIX_SOCKET: ${MONGODB_BIND_UNIX_SOCKET:-not set}"
+echo "  BIND_OPTIONS: ${BIND_OPTIONS}"
+
+# Check if MongoDB is already running
+check_mongodb_running() {
+    local port="${MONGODB_PORT:-27017}"
+    local bind_ip="${MONGODB_BIND_IP:-127.0.0.1}"
+    
+    # Check if MongoDB is already running on the configured port
+    if netstat -tuln 2>/dev/null | grep -q ":${port} "; then
+        echo "MongoDB is already running on port ${port}"
+        return 0
+    fi
+    
+    # Alternative check using lsof if netstat is not available
+    if command -v lsof >/dev/null 2>&1; then
+        if lsof -i ":${port}" >/dev/null 2>&1; then
+            echo "MongoDB is already running on port ${port} (detected via lsof)"
+            return 0
+        fi
+    fi
+    
+    # Check if there's a PID file and the process is still running
+    if [ -f "${SNAP_COMMON}/mongodb.pid" ]; then
+        local pid=$(cat "${SNAP_COMMON}/mongodb.pid" 2>/dev/null)
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            echo "MongoDB is already running (PID: $pid)"
+            return 0
+        else
+            # Remove stale PID file
+            rm -f "${SNAP_COMMON}/mongodb.pid"
+        fi
+    fi
+    
+    return 1
+}
+
+# Cleanup function to remove PID file on exit
+cleanup() {
+    rm -f "${SNAP_COMMON}/mongodb.pid"
+}
+trap cleanup EXIT
+
+# Check if MongoDB is already running
+if check_mongodb_running; then
+    echo "MongoDB is already running. Exiting to prevent multiple instances."
+    exit 0
+fi
+
+# Start MongoDB 7.x server
+echo "Starting MongoDB 7.x server..."
+# Create PID file
+echo $$ > "${SNAP_COMMON}/mongodb.pid"
+exec /snap/${SNAP_NAME}/current/bin/mongod \
+    --dbpath="$MONGO_DATA_DIR" \
+    --logpath="$MONGO_LOG_FILE" \
+    --logappend $BIND_OPTIONS

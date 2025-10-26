@@ -1,14 +1,14 @@
 # Note: Do not add single quotes '' to variables. Having spaces still works without quotes where required.
 #---------------------------------------------------------------------------------------------------------
 # ==== CREATING USERS AND LOGGING IN TO WEKAN ====
-# https://github.com/wekan/wekan/wiki/Adding-users
+# https://github.com/wekan/wekan/blob/main/docs/Login/Adding-users.md
 #---------------------------------------------------------------------------------------------------------
 # ==== FORGOT PASSWORD ====
-# https://github.com/wekan/wekan/wiki/Forgot-Password
+# https://github.com/wekan/wekan/blob/main/docs/Login/Forgot-Password.md
 #---------------------------------------------------------------------------------------------------------
 # ==== Upgrading Wekan to new version =====
 # NOTE: MongoDB has changed from 3.x to 4.x, in that case you need backup/restore with --noIndexRestore
-#       see https://github.com/wekan/wekan/wiki/Backup
+#       see https://github.com/wekan/wekan/tree/main/docs/Backup
 # 1) Stop Wekan:
 #      docker compose stop
 # 2) Remove old Wekan app (wekan-app only, not that wekan-db container that has all your data)
@@ -46,7 +46,7 @@
 #     docker compose stop
 # ----------------------------------------------------------------------------------
 # ===== INSIDE DOCKER CONTAINERS, AND BACKUP/RESTORE ====
-# https://github.com/wekan/wekan/wiki/Backup
+# https://github.com/wekan/wekan/tree/main/docs/Backup
 # If really necessary, repair MongoDB: https://github.com/wekan/wekan-mongodb/issues/6#issuecomment-424004116
 # 1) Going inside containers:
 #    a) Wekan app, does not contain data
@@ -167,9 +167,12 @@ services:
       #   ap-southeast-1,ap-northeast-1,sa-east-1
       #
       #- S3='{"s3":{"key": "xxx", "secret": "xxx", "bucket": "xxx", "region": "xxx"}}'
+      #- S3_SECRET_FILE=/run/secrets/s3_secret
       #-----------------------------------------------------------------
       # ==== MONGO_URL ====
       - MONGO_URL=mongodb://wekandb:27017/wekan
+      #- MONGO_URL=mongodb://username:password@wekandb:27017/wekan
+      #- MONGO_PASSWORD_FILE=/run/secrets/mongo_password
       #---------------------------------------------------------------
       # ==== ROOT_URL SETTING ====
       # Change ROOT_URL to your real Wekan URL, for example:
@@ -188,7 +191,7 @@ services:
       # ==== EMAIL SETTINGS ====
       # Email settings are only at MAIL_URL and MAIL_FROM.
       # Admin Panel has test button, but it's not used for settings.
-      #   see https://github.com/wekan/wekan/wiki/Troubleshooting-Mail
+      #   see https://github.com/wekan/wekan/blob/main/docs/Email/Troubleshooting-Mail.md
       #   For SSL in email, change smtp:// to smtps://
       # NOTE: Special characters need to be url-encoded in MAIL_URL.
       #       You can encode those characters for example at: https://www.urlencoder.org
@@ -200,6 +203,7 @@ services:
       #- MAIL_SERVICE=Outlook365
       #- MAIL_SERVICE_USER=firstname.lastname@hotmail.com
       #- MAIL_SERVICE_PASSWORD=SecretPassword
+      #- MAIL_SERVICE_PASSWORD_FILE=/run/secrets/mail_service_password
       #---------------------------------------------------------------
       # https://github.com/wekan/wekan/issues/3585#issuecomment-1021522132
       # Add more Node heap, this is done by default at Dockerfile:
@@ -234,7 +238,7 @@ services:
       #- APM_APP_SECRET=
       #---------------------------------------------------------------
       # ==== OPTIONAL: LOGS AND STATS ====
-      # https://github.com/wekan/wekan/wiki/Logs
+      # https://github.com/wekan/wekan/blob/main/docs/Features/Logs.md
       #
       # Daily export of Wekan changes as JSON to Logstash and ElasticSearch / Kibana (ELK)
       # https://github.com/wekan/wekan-logstash
@@ -258,7 +262,7 @@ services:
       #---------------------------------------------------------------
       # ==== WEKAN API AND EXPORT BOARD ====
       # Wekan Export Board works when WITH_API=true.
-      # https://github.com/wekan/wekan/wiki/REST-API
+      # https://github.com/wekan/wekan/blob/main/docs/API/REST-API.md
       # https://github.com/wekan/wekan-gogs
       # If you disable Wekan API with false, Export Board does not work.
       - WITH_API=true
@@ -367,7 +371,7 @@ services:
       #- TRUSTED_URL=https://intra.example.com
       #-----------------------------------------------------------------
       # ==== METRICS ALLOWED IP ADDRESSES ====
-      # https://github.com/wekan/wekan/wiki/Metrics
+      # https://github.com/wekan/wekan/blob/main/docs/Features/Metrics.md
       #- METRICS_ALLOWED_IP_ADDRESSES=192.168.0.100,192.168.0.200
       #-----------------------------------------------------------------
       # ==== OUTGOING WEBHOOKS ====
@@ -378,14 +382,14 @@ services:
       #- DEBUG=true
       #---------------------------------------------
       # ==== AUTOLOGIN WITH OIDC/OAUTH2 ====
-      # https://github.com/wekan/wekan/wiki/autologin
+      # https://github.com/wekan/wekan/blob/main/docs/Login/autologin.md
       #- OIDC_REDIRECTION_ENABLED=true
       #-----------------------------------------------------------------
       # ==== OAUTH2 ORACLE on premise identity manager OIM ====
       #- ORACLE_OIM_ENABLED=true
       #-----------------------------------------------------------------
       # ==== OAUTH2 AZURE ====
-      # https://github.com/wekan/wekan/wiki/Azure
+      # https://github.com/wekan/wekan/blob/main/docs/Login/Azure/Azure.md
       # 1) Register the application with Azure. Make sure you capture
       #    the application ID as well as generate a secret key.
       # 2) Configure the environment variables. This differs slightly
@@ -403,6 +407,7 @@ services:
       #- OAUTH2_CLIENT_ID=xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx
       # Secret key generated during app registration:
       #- OAUTH2_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      #- OAUTH2_SECRET_FILE=/run/secrets/oauth2_secret
       #- OAUTH2_SERVER_URL=https://login.microsoftonline.com/
       #- OAUTH2_AUTH_ENDPOINT=/oauth2/v2.0/authorize
       #- OAUTH2_USERINFO_ENDPOINT=https://graph.microsoft.com/oidc/userinfo
@@ -429,6 +434,7 @@ services:
       #- OAUTH2_CLIENT_ID=xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx
       # Secret key generated during app registration:
       #- OAUTH2_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      #- OAUTH2_SECRET_FILE=/run/secrets/oauth2_secret
       #- OAUTH2_SERVER_URL=https://your-nextcloud.tld
       #- OAUTH2_AUTH_ENDPOINT=/index.php/apps/oauth2/authorize
       #- OAUTH2_USERINFO_ENDPOINT=/ocs/v2.php/cloud/user?format=json
@@ -443,7 +449,7 @@ services:
       #- OAUTH2_EMAIL_MAP=email
       #-----------------------------------------------------------------
       # ==== OAUTH2 KEYCLOAK ====
-      # https://github.com/wekan/wekan/wiki/Keycloak  <== MAPPING INFO, REQUIRED
+      # https://github.com/wekan/wekan/blob/main/docs/Login/Keycloak/Keycloak.md  <== MAPPING INFO, REQUIRED
       #- OAUTH2_ENABLED=true
       # OAuth2 login style: popup or redirect.
       #- OAUTH2_LOGIN_STYLE=redirect
@@ -453,6 +459,7 @@ services:
       #- OAUTH2_USERINFO_ENDPOINT=/realms/<keycloak realm>/protocol/openid-connect/userinfo
       #- OAUTH2_TOKEN_ENDPOINT=/realms/<keycloak realm>/protocol/openid-connect/token
       #- OAUTH2_SECRET=<keycloak client secret>
+      #- OAUTH2_SECRET_FILE=/run/secrets/oauth2_secret
       #- OAUTH2_ID_MAP=sub
       #- OAUTH2_USERNAME_MAP=preferred_username
       #- OAUTH2_EMAIL_MAP=email
@@ -460,16 +467,17 @@ services:
       #-----------------------------------------------------------------
       # ==== OAUTH2 DOORKEEPER ====
       # https://github.com/wekan/wekan/issues/1874
-      # https://github.com/wekan/wekan/wiki/OAuth2
+      # https://github.com/wekan/wekan/blob/main/docs/Login/OAuth2.md2
       # Enable the OAuth2 connection
       #- OAUTH2_ENABLED=true
-      # OAuth2 docs: https://github.com/wekan/wekan/wiki/OAuth2
+      # OAuth2 docs: https://github.com/wekan/wekan/blob/main/docs/Login/OAuth2.md
       # OAuth2 login style: popup or redirect.
       #- OAUTH2_LOGIN_STYLE=redirect
       # OAuth2 Client ID.
       #- OAUTH2_CLIENT_ID=abcde12345
       # OAuth2 Secret.
       #- OAUTH2_SECRET=54321abcde
+      #- OAUTH2_SECRET_FILE=/run/secrets/oauth2_secret
       # OAuth2 Server URL.
       #- OAUTH2_SERVER_URL=https://chat.example.com
       # OAuth2 Authorization Endpoint.
@@ -492,8 +500,8 @@ services:
       #- OAUTH2_EMAIL_MAP=
       #-----------------------------------------------------------------
       # ==== LDAP: UNCOMMENT ALL TO ENABLE LDAP ====
-      # https://github.com/wekan/wekan/wiki/LDAP
-      # For Snap settings see https://github.com/wekan/wekan-snap/wiki/Supported-settings-keys
+      # https://github.com/wekan/wekan/blob/main/docs/Login/LDAP.md
+      # For Snap settings see https://github.com/wekan/wekan/blob/main/docs/Platforms/FOSS/Snap/Supported-settings-keys.md
       # Most settings work both on Snap and Docker below.
       # Note: Do not add single quotes '' to variables. Having spaces still works without quotes where required.
       #
@@ -576,6 +584,7 @@ services:
       #
       # The password for the search user
       #- LDAP_AUTHENTIFICATION_PASSWORD=pwd
+      #- LDAP_AUTHENTIFICATION_PASSWORD_FILE=/run/secrets/ldap_auth_password
       #
       # Enable logs for the module
       #- LDAP_LOG_ENABLED=true
@@ -731,6 +740,13 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - wekan-files:/data:rw
+    # Secrets are optional. Uncomment below and ensure files exist to use them.
+    #secrets:
+    #  - ldap_auth_password
+    #  - oauth2_secret
+    #  - mail_service_password
+    #  - mongo_password
+    #  - s3_secret
 
 #---------------------------------------------------------------------------------
 # ==== OPTIONAL: SHARE DATABASE TO OFFICE LAN AND REMOTE VPN ====
@@ -792,3 +808,20 @@ volumes:
 networks:
   wekan-tier:
     driver: bridge
+
+# Docker Compose Secrets
+# Create secret files on the host system before running docker-compose up
+# Example: echo "your_password_here" > ldap_auth_password.txt
+# Then use: docker-compose up -d
+# Secrets are optional. Uncomment to enable and ensure files exist at provided paths.
+#secrets:
+#  ldap_auth_password:
+#    file: ./secrets/ldap_auth_password.txt
+#  oauth2_secret:
+#    file: ./secrets/oauth2_secret.txt
+#  mail_service_password:
+#    file: ./secrets/mail_service_password.txt
+#  mongo_password:
+#    file: ./secrets/mongo_password.txt
+#  s3_secret:
+#    file: ./secrets/s3_secret.txt

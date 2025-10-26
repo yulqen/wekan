@@ -1,7 +1,325 @@
+{
+    type: "ConditionalExpression",
+    test: {
+        type: "LogicalExpression",
+        operator: "&&",
+        left: {
+            type: "Identifier",
+            name: "TAPi18n",
+            loc: {start: {line: 2217,column: 15},end: {line: 2217,column: 22}}
+        },
+        right: {
+            type: "MemberExpression",
+            computed: False,
+            object: {
+                type: "Identifier",
+                name: "TAPi18n",
+                loc: {start: {line: 2217,column: 26},end: {line: 2217,column: 33}}
+            },
+            property: {
+                type: "Identifier",
+                name: "i18n",
+                loc: {start: {line: 2217,column: 34},end: {line: 2217,column: 38}}
+            },
+            loc: {start: {line: 2217,column: 26},end: {line: 2217,column: 38}}
+        },
+        loc: {start: {line: 2217,column: 15},end: {line: 2217,column: 38}}
+    },
+    consequent: {
+        type: "CallExpression",
+        callee: {
+            type: "MemberExpression",
+            computed: False,
+            object: {
+                type: "Identifier",
+                name: "TAPi18n",
+                loc: {start: {line: 2217,column: 41},end: {line: 2217,column: 48}}
+            },
+            property: {
+                type: "Identifier",
+                name: "__",
+                loc: {start: {line: 2217,column: 49},end: {line: 2217,column: 51}}
+            },
+            loc: {start: {line: 2217,column: 41},end: {line: 2217,column: 51}}
+        },
+        arguments: [
+            {
+                type: "Literal",
+                value: "default",
+                raw: "'default'",
+                loc: {start: {line: 2217,column: 52},end: {line: 2217,column: 61}}
+            }
+        ],
+        loc: {start: {line: 2217,column: 41},end: {line: 2217,column: 62}}
+    },
+    alternate: {
+        type: "Literal",
+        value: "Default",
+        raw: "'Default'",
+        loc: {start: {line: 2217,column: 65},end: {line: 2217,column: 74}}
+    },
+    loc: {start: {line: 2217,column: 15},end: {line: 2217,column: 74}}
+}
+{
+    type: "ConditionalExpression",
+    test: {
+        type: "BinaryExpression",
+        operator: ">",
+        left: {
+            type: "MemberExpression",
+            computed: False,
+            object: {
+                type: "MemberExpression",
+                computed: False,
+                object: {
+                    type: "MemberExpression",
+                    computed: False,
+                    object: {
+                        type: "Identifier",
+                        name: "req",
+                        loc: {start: {line: 3587,column: 25},end: {line: 3587,column: 28}}
+                    },
+                    property: {
+                        type: "Identifier",
+                        name: "body",
+                        loc: {start: {line: 3587,column: 29},end: {line: 3587,column: 33}}
+                    },
+                    loc: {start: {line: 3587,column: 25},end: {line: 3587,column: 33}}
+                },
+                property: {
+                    type: "Identifier",
+                    name: "title",
+                    loc: {start: {line: 3587,column: 34},end: {line: 3587,column: 39}}
+                },
+                loc: {start: {line: 3587,column: 25},end: {line: 3587,column: 39}}
+            },
+            property: {
+                type: "Identifier",
+                name: "length",
+                loc: {start: {line: 3587,column: 40},end: {line: 3587,column: 46}}
+            },
+            loc: {start: {line: 3587,column: 25},end: {line: 3587,column: 46}}
+        },
+        right: {
+            type: "Literal",
+            value: 1000,
+            raw: "1000",
+            loc: {start: {line: 3587,column: 49},end: {line: 3587,column: 53}}
+        },
+        loc: {start: {line: 3587,column: 25},end: {line: 3587,column: 53}}
+    },
+    consequent: {
+        type: "CallExpression",
+        callee: {
+            type: "MemberExpression",
+            computed: False,
+            object: {
+                type: "MemberExpression",
+                computed: False,
+                object: {
+                    type: "MemberExpression",
+                    computed: False,
+                    object: {
+                        type: "Identifier",
+                        name: "req",
+                        loc: {start: {line: 3587,column: 56},end: {line: 3587,column: 59}}
+                    },
+                    property: {
+                        type: "Identifier",
+                        name: "body",
+                        loc: {start: {line: 3587,column: 60},end: {line: 3587,column: 64}}
+                    },
+                    loc: {start: {line: 3587,column: 56},end: {line: 3587,column: 64}}
+                },
+                property: {
+                    type: "Identifier",
+                    name: "title",
+                    loc: {start: {line: 3587,column: 65},end: {line: 3587,column: 70}}
+                },
+                loc: {start: {line: 3587,column: 56},end: {line: 3587,column: 70}}
+            },
+            property: {
+                type: "Identifier",
+                name: "substring",
+                loc: {start: {line: 3587,column: 71},end: {line: 3587,column: 80}}
+            },
+            loc: {start: {line: 3587,column: 56},end: {line: 3587,column: 80}}
+        },
+        arguments: [
+            {
+                type: "Literal",
+                value: 0,
+                raw: "0",
+                loc: {start: {line: 3587,column: 81},end: {line: 3587,column: 82}}
+            },
+            {
+                type: "Literal",
+                value: 1000,
+                raw: "1000",
+                loc: {start: {line: 3587,column: 84},end: {line: 3587,column: 88}}
+            }
+        ],
+        loc: {start: {line: 3587,column: 56},end: {line: 3587,column: 89}}
+    },
+    alternate: {
+        type: "MemberExpression",
+        computed: False,
+        object: {
+            type: "MemberExpression",
+            computed: False,
+            object: {
+                type: "Identifier",
+                name: "req",
+                loc: {start: {line: 3587,column: 92},end: {line: 3587,column: 95}}
+            },
+            property: {
+                type: "Identifier",
+                name: "body",
+                loc: {start: {line: 3587,column: 96},end: {line: 3587,column: 100}}
+            },
+            loc: {start: {line: 3587,column: 92},end: {line: 3587,column: 100}}
+        },
+        property: {
+            type: "Identifier",
+            name: "title",
+            loc: {start: {line: 3587,column: 101},end: {line: 3587,column: 106}}
+        },
+        loc: {start: {line: 3587,column: 92},end: {line: 3587,column: 106}}
+    },
+    loc: {start: {line: 3587,column: 25},end: {line: 3587,column: 106}}
+}
+{
+    type: "ConditionalExpression",
+    test: {
+        type: "BinaryExpression",
+        operator: ">",
+        left: {
+            type: "MemberExpression",
+            computed: False,
+            object: {
+                type: "MemberExpression",
+                computed: False,
+                object: {
+                    type: "MemberExpression",
+                    computed: False,
+                    object: {
+                        type: "Identifier",
+                        name: "req",
+                        loc: {start: {line: 655,column: 25},end: {line: 655,column: 28}}
+                    },
+                    property: {
+                        type: "Identifier",
+                        name: "body",
+                        loc: {start: {line: 655,column: 29},end: {line: 655,column: 33}}
+                    },
+                    loc: {start: {line: 655,column: 25},end: {line: 655,column: 33}}
+                },
+                property: {
+                    type: "Identifier",
+                    name: "title",
+                    loc: {start: {line: 655,column: 34},end: {line: 655,column: 39}}
+                },
+                loc: {start: {line: 655,column: 25},end: {line: 655,column: 39}}
+            },
+            property: {
+                type: "Identifier",
+                name: "length",
+                loc: {start: {line: 655,column: 40},end: {line: 655,column: 46}}
+            },
+            loc: {start: {line: 655,column: 25},end: {line: 655,column: 46}}
+        },
+        right: {
+            type: "Literal",
+            value: 1000,
+            raw: "1000",
+            loc: {start: {line: 655,column: 49},end: {line: 655,column: 53}}
+        },
+        loc: {start: {line: 655,column: 25},end: {line: 655,column: 53}}
+    },
+    consequent: {
+        type: "CallExpression",
+        callee: {
+            type: "MemberExpression",
+            computed: False,
+            object: {
+                type: "MemberExpression",
+                computed: False,
+                object: {
+                    type: "MemberExpression",
+                    computed: False,
+                    object: {
+                        type: "Identifier",
+                        name: "req",
+                        loc: {start: {line: 655,column: 56},end: {line: 655,column: 59}}
+                    },
+                    property: {
+                        type: "Identifier",
+                        name: "body",
+                        loc: {start: {line: 655,column: 60},end: {line: 655,column: 64}}
+                    },
+                    loc: {start: {line: 655,column: 56},end: {line: 655,column: 64}}
+                },
+                property: {
+                    type: "Identifier",
+                    name: "title",
+                    loc: {start: {line: 655,column: 65},end: {line: 655,column: 70}}
+                },
+                loc: {start: {line: 655,column: 56},end: {line: 655,column: 70}}
+            },
+            property: {
+                type: "Identifier",
+                name: "substring",
+                loc: {start: {line: 655,column: 71},end: {line: 655,column: 80}}
+            },
+            loc: {start: {line: 655,column: 56},end: {line: 655,column: 80}}
+        },
+        arguments: [
+            {
+                type: "Literal",
+                value: 0,
+                raw: "0",
+                loc: {start: {line: 655,column: 81},end: {line: 655,column: 82}}
+            },
+            {
+                type: "Literal",
+                value: 1000,
+                raw: "1000",
+                loc: {start: {line: 655,column: 84},end: {line: 655,column: 88}}
+            }
+        ],
+        loc: {start: {line: 655,column: 56},end: {line: 655,column: 89}}
+    },
+    alternate: {
+        type: "MemberExpression",
+        computed: False,
+        object: {
+            type: "MemberExpression",
+            computed: False,
+            object: {
+                type: "Identifier",
+                name: "req",
+                loc: {start: {line: 655,column: 92},end: {line: 655,column: 95}}
+            },
+            property: {
+                type: "Identifier",
+                name: "body",
+                loc: {start: {line: 655,column: 96},end: {line: 655,column: 100}}
+            },
+            loc: {start: {line: 655,column: 92},end: {line: 655,column: 100}}
+        },
+        property: {
+            type: "Identifier",
+            name: "title",
+            loc: {start: {line: 655,column: 101},end: {line: 655,column: 106}}
+        },
+        loc: {start: {line: 655,column: 92},end: {line: 655,column: 106}}
+    },
+    loc: {start: {line: 655,column: 25},end: {line: 655,column: 106}}
+}
 swagger: '2.0'
 info:
   title: Wekan REST API
-  version: v7.92
+  version: v8.02
   description: |
     The REST API allows you to control and extend Wekan with ease.
 
@@ -1666,7 +1984,6 @@ paths:
          adds the label to the board.
       tags:
         - Boards
-        - Boards
       consumes:
         - multipart/form-data
         - application/json
@@ -1737,6 +2054,11 @@ paths:
             the title of the List
           type: string
           required: true
+        - name: swimlaneId
+          in: formData
+          description: the swimlaneId value
+          type: string
+          required: true
         - name: board
           in: path
           description: |
@@ -1785,6 +2107,73 @@ paths:
             200 response
           schema:
             $ref: "#/definitions/Lists"
+    put:
+      operationId: edit_list
+      summary: Edit a List
+      description: |
+        This updates a list on a board.
+         You can update the title, color, wipLimit, starred, and collapsed properties.
+      tags:
+        - Lists
+      consumes:
+        - multipart/form-data
+        - application/json
+      parameters:
+        - name: title
+          in: formData
+          description: |
+            the new title of the list
+          type: string
+          required: false
+        - name: color
+          in: formData
+          description: |
+            the new color of the list
+          type: string
+          required: false
+        - name: starred
+          in: formData
+          description: |
+            whether the list is starred
+          type: boolean
+          required: false
+        - name: collapsed
+          in: formData
+          description: |
+            whether the list is collapsed
+          type: boolean
+          required: false
+        - name: wipLimit
+          in: formData
+          description: |
+            the WIP limit configuration
+          type: object
+          required: false
+        - name: board
+          in: path
+          description: |
+            the board ID
+          type: string
+          required: true
+        - name: list
+          in: path
+          description: |
+            the ID of the list to update
+          type: string
+          required: true
+      produces:
+        - application/json
+      security:
+          - UserSecurity: []
+      responses:
+        '200':
+          description: |-
+            200 response
+          schema:
+            type: object
+            properties:
+              _id:
+                type: string
     delete:
       operationId: delete_list
       summary: Delete a List
@@ -2261,7 +2650,14 @@ paths:
               _id:
                 type: string
               customFields:
-                type: object
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    value:
+                      type: object
   /api/boards/{board}/lists/{list}/cards_count:
     get:
       operationId: get_list_cards_count
@@ -2606,6 +3002,29 @@ paths:
                 type: integer
               public:
                 type: integer
+  /api/cards/{card}:
+    get:
+      operationId: get_card_by_id
+      summary: Get a Card by Card ID
+      tags:
+        - Cards
+      parameters:
+        - name: card
+          in: path
+          description: |
+            the card ID
+          type: string
+          required: true
+      produces:
+        - application/json
+      security:
+          - UserSecurity: []
+      responses:
+        '200':
+          description: |-
+            200 response
+          schema:
+            $ref: "#/definitions/Cards"
   /api/users/{user}/boards:
     get:
       operationId: get_boards_from_user
@@ -2752,6 +3171,11 @@ definitions:
            The default board ID assigned to subtasks.
         type: string
         x-nullable: true
+      migrationVersion:
+        description: |
+           The migration version of the board structure.
+           New boards are created with the latest version and don't need migration.
+        type: number
       subtasksDefaultListId:
         description: |
            The default List ID assigned to subtasks.
@@ -2847,6 +3271,10 @@ definitions:
         description: |
            Does the board allows requested by?
         type: boolean
+      allowsShowListsOnMinicard:
+        description: |
+           Does the board allow showing list names on all minicards?
+        type: boolean
       allowsReceivedDate:
         description: |
            Does the board allows received date?
@@ -2936,6 +3364,7 @@ definitions:
       - color
       - allowsCardCounterList
       - allowsBoardMemberList
+      - migrationVersion
       - allowsSubtasks
       - allowsAttachments
       - allowsChecklists
@@ -2957,6 +3386,7 @@ definitions:
       - allowsCardSortingByNumber
       - allowsShowLists
       - allowsAssignedBy
+      - allowsShowListsOnMinicard
       - allowsReceivedDate
       - allowsStartDate
       - allowsEndDate
@@ -3343,6 +3773,11 @@ definitions:
            hide completed checklist?
         type: boolean
         x-nullable: true
+      showListOnMinicard:
+        description: |
+           show list name on minicard?
+        type: boolean
+        x-nullable: true
     required:
       - archived
       - swimlaneId
@@ -3710,8 +4145,9 @@ definitions:
         type: string
       swimlaneId:
         description: |
-           the swimlane associated to this list. Used for templates
+           the swimlane associated to this list. Optional for backward compatibility
         type: string
+        x-nullable: true
       createdAt:
         description: |
            creation date
@@ -3776,7 +4212,6 @@ definitions:
       - title
       - archived
       - boardId
-      - swimlaneId
       - createdAt
       - modifiedAt
       - type

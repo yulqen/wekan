@@ -8,8 +8,230 @@
   padding: 0;
   float: left;
 }
+
+/* List resize handle */
+.list-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background-color 0.2s ease;
+  border-radius: 2px;
+  /* Ensure the handle is clickable */
+  pointer-events: auto;
+}
+
+.list-resize-handle:hover {
+  background: rgba(0, 123, 255, 0.4);
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+.list-resize-handle:active {
+  background: rgba(0, 123, 255, 0.6);
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.4);
+}
+
+/* Show resize handle only on hover */
+.list:hover .list-resize-handle {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.list:hover .list-resize-handle:hover {
+  background: rgba(0, 123, 255, 0.4);
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+/* Add a subtle indicator line */
+.list-resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.list-resize-handle:hover::before {
+  opacity: 1;
+}
+
+/* Disable resize handle for collapsed lists and mobile view */
+.list.list-collapsed .list-resize-handle,
+.list.mobile-view .list-resize-handle {
+  display: none;
+}
+
+/* Disable resize handle for auto-width lists */
+.list.list-auto-width .list-resize-handle {
+  display: none;
+}
+
+/* Visual feedback during resize */
+.list.list-resizing {
+  transition: none !important;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+  /* Ensure the list maintains its new width during resize */
+  flex: none !important;
+  flex-basis: auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  /* Override any conflicting layout properties */
+  float: left !important;
+  display: block !important;
+  position: relative !important;
+  /* Force width to be respected */
+  width: var(--list-width, auto) !important;
+  min-width: var(--list-width, auto) !important;
+  max-width: var(--list-width, auto) !important;
+  /* Ensure the width is applied immediately */
+  overflow: visible !important;
+}
+
+body.list-resizing-active {
+  cursor: col-resize !important;
+}
+
+body.list-resizing-active * {
+  cursor: col-resize !important;
+}
+
+/* Ensure swimlane container doesn't interfere with list resizing */
+.swimlane .list.list-resizing {
+  /* Override any swimlane flex properties */
+  flex: none !important;
+  flex-basis: auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  /* Ensure width is respected */
+  width: var(--list-width, auto) !important;
+  min-width: var(--list-width, auto) !important;
+  max-width: var(--list-width, auto) !important;
+}
+
+/* More aggressive override for any container that might interfere */
+.js-swimlane .list.list-resizing,
+.dragscroll .list.list-resizing,
+[id^="swimlane-"] .list.list-resizing {
+  /* Force the width to be applied */
+  width: var(--list-width, auto) !important;
+  min-width: var(--list-width, auto) !important;
+  max-width: var(--list-width, auto) !important;
+  flex: none !important;
+  flex-basis: auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  float: left !important;
+  display: block !important;
+}
+
+/* Ensure the width persists after resize is complete */
+.js-swimlane .list[style*="--list-width"],
+.dragscroll .list[style*="--list-width"],
+[id^="swimlane-"] .list[style*="--list-width"] {
+  /* Maintain the width after resize */
+  width: var(--list-width, auto) !important;
+  min-width: var(--list-width, auto) !important;
+  max-width: var(--list-width, auto) !important;
+  flex: none !important;
+  flex-basis: auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  float: left !important;
+  display: block !important;
+}
+
+/* Ensure consistent header height for all lists */
+.list-header {
+  /* Maintain consistent height and padding for all lists */
+  min-height: 2.5vh !important;
+  height: auto !important;
+  padding: 2.5vh 1.5vw 0.5vh !important;
+  /* Make sure the background covers the full height */
+  background-color: #e4e4e4 !important;
+  border-bottom: 0.8vh solid #e4e4e4 !important;
+  /* Use original display for consistent button positioning */
+  display: block !important;
+  position: relative !important;
+  /* Prevent vertical expansion but allow normal height */
+  overflow: hidden !important;
+}
+
+/* Ensure title text doesn't cause height changes for all lists */
+.list-header .list-header-name {
+  /* Prevent text wrapping to maintain consistent height */
+  white-space: nowrap !important;
+  /* Truncate text with ellipsis if too long */
+  text-overflow: ellipsis !important;
+  /* Ensure proper line height */
+  line-height: 1.2 !important;
+  /* Ensure it doesn't overflow */
+  overflow: hidden !important;
+  /* Add margin to prevent overlap with buttons */
+  margin-right: 120px !important;
+}
+
+/* Position drag handle at top-right corner for ALL lists */
+.list-header .list-header-handle {
+  /* Position at top-right corner, aligned with title text top */
+  position: absolute !important;
+  top: 2.5vh !important;
+  right: 1.5vw !important;
+  /* Ensure it's above other elements */
+  z-index: 15 !important;
+  /* Remove margin since it's absolutely positioned */
+  margin-right: 0 !important;
+  /* Ensure proper display */
+  display: inline-block !important;
+  /* Ensure it's clickable and shows proper cursor */
+  cursor: move !important;
+  pointer-events: auto !important;
+  /* Add some padding for better clickability */
+  padding: 4px !important;
+}
+
+/* Ensure buttons maintain original positioning */
+.js-swimlane .list[style*="--list-width"] .list-header .list-header-plus-top,
+.js-swimlane .list[style*="--list-width"] .list-header .js-collapse,
+.js-swimlane .list[style*="--list-width"] .list-header .js-open-list-menu,
+.dragscroll .list[style*="--list-width"] .list-header .list-header-plus-top,
+.dragscroll .list[style*="--list-width"] .list-header .js-collapse,
+.dragscroll .list[style*="--list-width"] .list-header .js-open-list-menu,
+[id^="swimlane-"] .list[style*="--list-width"] .list-header .list-header-plus-top,
+[id^="swimlane-"] .list[style*="--list-width"] .list-header .js-collapse,
+[id^="swimlane-"] .list[style*="--list-width"] .list-header .js-open-list-menu {
+  /* Use original positioning to maintain layout */
+  position: relative !important;
+  /* Maintain original spacing */
+  margin-right: 15px !important;
+  /* Ensure proper display */
+  display: inline-block !important;
+}
+
+/* Ensure watch icon and card count maintain original positioning */
+.js-swimlane .list[style*="--list-width"] .list-header .list-header-watch-icon,
+.dragscroll .list[style*="--list-width"] .list-header .list-header-watch-icon,
+[id^="swimlane-"] .list[style*="--list-width"] .list-header .list-header-watch-icon,
+.js-swimlane .list[style*="--list-width"] .list-header .cardCount,
+.dragscroll .list[style*="--list-width"] .list-header .cardCount,
+[id^="swimlane-"] .list[style*="--list-width"] .list-header .cardCount {
+  /* Use original positioning to maintain layout */
+  position: relative !important;
+  /* Maintain original spacing */
+  margin-right: 15px !important;
+  /* Ensure proper display */
+  display: inline-block !important;
+}
 [id^="swimlane-"] .list:first-child {
-  min-width: 20px;
+  min-width: 2.5vw;
 }
 .list.list-auto-width {
   flex: 1;
@@ -33,11 +255,74 @@
   background-color: rgba(0,0,0,0.2);
   border-color: transparent;
   box-shadow: none;
-  height: 100px;
+  height: 15vh;
 }
 .list.list-collapsed {
   flex: none;
+  min-width: 60px;
+  max-width: 80px;
+  width: 60px;
+  min-height: 60vh;
+  height: 60vh;
+  overflow: visible;
+  position: relative;
 }
+.list.list-collapsed .list-header {
+  padding: 1vh 1.5vw 0.5vh;
+  min-height: 2.5vh !important;
+  height: auto !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  overflow: visible !important;
+  width: 100%;
+  max-width: 60px;
+  margin: 0 auto;
+}
+.list.list-collapsed .list-header .js-collapse {
+  margin: 0 auto 20px auto;
+  z-index: 10;
+  padding: 8px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  display: block;
+  width: fit-content;
+}
+.list.list-collapsed .list-header .list-rotated {
+  width: auto !important;
+  height: auto !important;
+  margin: 20px 0 0 0 !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.list.list-collapsed .list-header .list-rotated h2.list-header-name {
+  text-align: left;
+  overflow: visible;
+  white-space: nowrap;
+  display: block !important;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #333;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ddd;
+  padding: 8px 4px;
+  border-radius: 4px;
+  margin: 0 auto;
+  width: 25vh;
+  height: 60vh;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% + 50px), -50%) rotate(0deg);
+  z-index: 10;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
 .list.list-composer .open-list-composer,
 .list .list-composer .open-list-composer {
   color: #8c8c8c;
@@ -45,24 +330,24 @@
 .list.list-composer .list-name-input,
 .list .list-composer .list-name-input {
   background: #fff;
-  margin: -3px 0 8px;
+  margin: -0.4vh 0 1vh;
 }
 .list-header-add {
   flex: 0 0 auto;
-  padding: 12px;
+  padding: 1.5vh 1.5vw;
   position: relative;
-  min-height: 20px;
+  min-height: 2.5vh;
 }
 .list-header {
   flex: 0 0 auto;
-  padding: 20px 12px 4px;
+  padding: 2.5vh 1.5vw 0.5vh;
   position: relative;
-  min-height: 20px;
+  min-height: 2.5vh;
   background-color: #e4e4e4;
-  border-bottom: 6px solid #e4e4e4;
+  border-bottom: 0.8vh solid #e4e4e4;
 }
 .list-header.list-header-card-count {
-  min-height: 35px;
+  min-height: 4.5vh;
   height: auto;
 }
 .list-header.ui-sortable-handle {
@@ -73,29 +358,26 @@
 }
 .list-header .list-header-name {
   display: inline;
-  font-size: 16px;
-  line-height: 17px;
+  font-size: clamp(14px, 3vw, 18px);
+  line-height: 1.2;
   margin: 0;
   font-weight: bold;
-  min-height: 9px;
-  min-width: 30px;
+  min-height: 1.2vh;
+  min-width: 4vw;
   overflow: hidden;
   text-overflow: ellipsis;
   word-wrap: break-word;
 }
 .list-rotated {
-  width: 10px;
-  height: 250px;
-  margin-top: -90px;
-  margin-left: -110px;
+  width: 1.3vw;
+  height: 35vh;
+  margin-top: -12vh;
+  margin-left: -14vw;
   margin-right: 0;
   transform: rotate(90deg);
   position: relative;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.list-header .list-rotated {
-
 }
 .list-header .list-header-watch-icon {
   padding-left: 10px;
@@ -121,11 +403,152 @@
   color: #a6a6a6;
   margin-right: 15px;
 }
-.list-header .list-header-uncollapse-left {
+.list-header .js-collapse {
   color: #a6a6a6;
+  margin-right: 15px;
+  display: inline-block;
+  vertical-align: middle;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  cursor: pointer;
+  font-size: 14px;
 }
-.list-header .list-header-uncollapse-right {
-  color: #a6a6a6;
+.list-header .js-collapse:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+.list.list-collapsed .list-header .js-collapse {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Responsive adjustments for collapsed lists */
+@media (min-width: 768px) {
+  .list.list-collapsed {
+    min-width: 60px;
+    max-width: 80px;
+    width: 60px;
+    min-height: 60vh;
+    height: 60vh;
+  }
+  .list.list-collapsed .list-header {
+    max-width: 60px;
+    margin: 0 auto;
+    min-height: 2.5vh !important;
+    height: auto !important;
+  }
+  .list.list-collapsed .list-header .list-rotated {
+    width: auto !important;
+    height: auto !important;
+    margin: 20px 0 0 0 !important;
+    position: relative !important;
+  }
+  .list.list-collapsed .list-header .list-rotated h2.list-header-name {
+    width: 15vh;
+    font-size: 12px;
+    height: 30px;
+    line-height: 1.2;
+    padding: 8px 4px;
+    margin: 0 auto;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(calc(-50% + 50px), -50%) rotate(0deg);
+    text-align: left;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    color: #333;
+    z-index: 10;
+  }
+  .list.list-collapsed .list-header .js-collapse {
+    margin: 0 auto 20px auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .list.list-collapsed {
+    min-height: 60vh;
+    height: 60vh;
+  }
+  .list.list-collapsed .list-header {
+    min-height: 2.5vh !important;
+    height: auto !important;
+  }
+  .list.list-collapsed .list-header .list-rotated {
+    width: auto !important;
+    height: auto !important;
+    margin: 20px 0 0 0 !important;
+    position: relative !important;
+  }
+  .list.list-collapsed .list-header .list-rotated h2.list-header-name {
+    width: 15vh;
+    font-size: 12px;
+    height: 30px;
+    line-height: 1.2;
+    padding: 8px 4px;
+    margin: 0 auto;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(calc(-50% + 50px), -50%) rotate(0deg);
+    text-align: left;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    color: #333;
+    z-index: 10;
+  }
+  .list.list-collapsed .list-header .js-collapse {
+    margin: 0 auto 20px auto;
+  }
+}
+
+@media (min-width: 1200px) {
+  .list.list-collapsed {
+    min-height: 60vh;
+    height: 60vh;
+  }
+  .list.list-collapsed .list-header {
+    min-height: 2.5vh !important;
+    height: auto !important;
+  }
+  .list.list-collapsed .list-header .list-rotated {
+    width: auto !important;
+    height: auto !important;
+    margin: 20px 0 0 0 !important;
+    position: relative !important;
+  }
+  .list.list-collapsed .list-header .list-rotated h2.list-header-name {
+    width: 15vh;
+    font-size: 12px;
+    height: 30px;
+    line-height: 1.2;
+    padding: 8px 4px;
+    margin: 0 auto;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(calc(-50% + 50px), -50%) rotate(0deg);
+    text-align: left;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    color: #333;
+    z-index: 10;
+  }
+  .list.list-collapsed .list-header .js-collapse {
+    margin: 0 auto 20px auto;
+  }
 }
 .list-header .list-header-collapse {
   color: #a6a6a6;
@@ -214,19 +637,163 @@
 #js-list-width-edit .list-width-error {
   display: none;
 }
-@media screen and (max-width: 800px) {
+/* Mobile view styles - applied when isMiniScreen is true (iPhone, etc.) */
+.mini-list.mobile-view {
+  flex: 0 0 60px;
+  height: auto;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 100vw;
+  border-left: 0px !important;
+  border-bottom: 1px solid #ccc;
+  display: block !important;
+}
+.list.mobile-view {
+  display: block !important;
+  flex-basis: auto;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 100vw;
+  border-left: 0px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.list.mobile-view:first-child {
+  margin-left: 0px;
+}
+.list.mobile-view.ui-sortable-helper {
+  flex: 0 0 60px;
+  height: 60px;
+  width: 100vw;
+  max-width: 100vw;
+  border-left: 0px !important;
+  border-bottom: 1px solid #ccc;
+  display: block !important;
+}
+.list.mobile-view.ui-sortable-helper .list-header.ui-sortable-handle {
+  cursor: grabbing;
+}
+.list.mobile-view.placeholder {
+  flex: 0 0 60px;
+  height: 60px;
+  width: 100vw;
+  max-width: 100vw;
+  border-left: 0px !important;
+  border-bottom: 1px solid #ccc;
+  display: block !important;
+}
+.list.mobile-view .list-body {
+  padding: 15px 19px;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 100vw;
+}
+.list.mobile-view .list-header {
+  /*Updated padding values for mobile devices, this should fix text grouping issue*/
+  padding: 20px 0px 20px 0px;
+  border-bottom: 0px solid #e4e4e4;
+  min-height: 30px;
+  margin-top: 10px;
+  align-items: center;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 100vw;
+  /* Force grid layout for iPhone */
+  display: grid !important;
+  grid-template-columns: 30px 1fr auto auto !important;
+  gap: 10px !important;
+}
+.list.mobile-view .list-header .list-header-left-icon {
+  padding: 7px;
+  padding-right: 27px;
+  margin-top: 1px;
+  top: -7px;
+  left: -7px;
+}
+.list.mobile-view .list-header .list-header-menu-icon {
+  padding: 14px;
+  font-size: 40px !important;
+  text-align: center;
+  /* Force positioning for iPhone */
+  position: absolute !important;
+  right: 60px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 10;
+}
+.list.mobile-view .list-header .list-header-handle {
+  padding: 14px;
+  font-size: 48px !important;
+  text-align: center;
+  /* Force positioning for iPhone */
+  position: absolute !important;
+  right: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 10;
+}
+.list.mobile-view .list-header .list-header-left-icon {
+  display: grid;
+  grid-row: 1/3;
+  grid-column: 1;
+}
+.list.mobile-view .list-header .list-header-name {
+  grid-row: 1;
+  grid-column: 2;
+  align-self: end;
+  font-size: 20px !important;
+  font-weight: bold;
+  line-height: 1.2;
+  padding-bottom: 2px;
+}
+.list.mobile-view .list-header .cardCount {
+  grid-row: 2;
+  grid-column: 2;
+  align-self: start;
+  font-size: 16px !important;
+  line-height: 1.2;
+}
+.list.mobile-view .list-header .list-header-menu {
+  grid-row: 1/3;
+  grid-column: 3;
+}
+.list.mobile-view .list-header .list-header-menu-icon {
+  grid-row: 1/3;
+  grid-column: 3;
+}
+.list.mobile-view .list-header .list-header-handle {
+  grid-row: 1/3;
+  grid-column: 4;
+}
+.list.mobile-view .list-header .inlined-form {
+  grid-row: 1/3;
+  grid-column: 1/4;
+}
+.list.mobile-view .list-header .edit-controls {
+  align-items: initial;
+}
+
+@media screen and (max-width: 800px),
+       screen and (max-device-width: 932px) and (-webkit-min-device-pixel-ratio: 3) {
   .mini-list {
     flex: 0 0 60px;
     height: auto;
-    width: 100%;
-    border-left: 0px;
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 100vw;
+    border-left: 0px !important;
     border-bottom: 1px solid #ccc;
+    display: block !important;
   }
   .list {
-    display: contents;
+    display: block !important;
     flex-basis: auto;
-    width: 100%;
-    border-left: 0px;
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 100vw;
+    border-left: 0px !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   .list:first-child {
     margin-left: 0px;
@@ -234,9 +801,11 @@
   .list.ui-sortable-helper {
     flex: 0 0 60px;
     height: 60px;
-    width: 100%;
-    border-left: 0px;
+    width: 100vw;
+    max-width: 100vw;
+    border-left: 0px !important;
     border-bottom: 1px solid #ccc;
+    display: block !important;
   }
   .list.ui-sortable-helper .list-header.ui-sortable-handle {
     cursor: grabbing;
@@ -244,12 +813,17 @@
   .list.placeholder {
     flex: 0 0 60px;
     height: 60px;
-    width: 100%;
-    border-left: 0px;
+    width: 100vw;
+    max-width: 100vw;
+    border-left: 0px !important;
     border-bottom: 1px solid #ccc;
+    display: block !important;
   }
   .list-body {
     padding: 15px 19px;
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 100vw;
   }
   .list-header {
 	  /*Updated padding values for mobile devices, this should fix text grouping issue*/
@@ -258,6 +832,9 @@
     min-height: 30px;
     margin-top: 10px;
     align-items: center;
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 100vw;
   }
   .list-header .list-header-left-icon {
     padding: 7px;
@@ -267,24 +844,29 @@
     left: -7px;
   }
   .list-header .list-header-menu-icon {
+    padding: 14px;
+    font-size: 40px;
+    text-align: center;
+    /* iOS Safari fallback positioning */
     position: absolute;
-    padding: 7px;
+    right: 60px;
     top: 50%;
     transform: translateY(-50%);
-    right: 47px;
-    font-size: 20px;
   }
   .list-header .list-header-handle {
+    padding: 14px;
+    font-size: 48px;
+    text-align: center;
+    /* iOS Safari fallback positioning */
     position: absolute;
-    padding: 7px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    right: 10px;
-    font-size: 24px;
   }
   .list-header {
     display: grid;
-    grid-template-columns: 30px 5fr 1fr;
+    grid-template-columns: 30px 1fr auto auto;
+    gap: 10px;
   }
   .list-header .list-header-left-icon {
     display: grid;
@@ -295,15 +877,29 @@
     grid-row: 1;
     grid-column: 2;
     align-self: end;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1.2;
+    padding-bottom: 2px;
   }
   .list-header .cardCount {
     grid-row: 2;
     grid-column: 2;
     align-self: start;
+    font-size: 16px;
+    line-height: 1.2;
   }
   .list-header .list-header-menu {
     grid-row: 1/3;
     grid-column: 3;
+  }
+  .list-header .list-header-menu-icon {
+    grid-row: 1/3;
+    grid-column: 3;
+  }
+  .list-header .list-header-handle {
+    grid-row: 1/3;
+    grid-column: 4;
   }
   .list-header .inlined-form {
     grid-row: 1/3;
@@ -312,6 +908,132 @@
   .list-header .edit-controls {
     align-items: initial;
   }
+}
+
+/* iPhone 12 Mini specific - fix icon positioning in stacked lists view */
+@media screen and (device-width: 375px) and (device-height: 812px), /* iPhone 12 Mini exact */
+       screen and (max-width: 375px) and (max-height: 812px), /* iPhone 12 Mini viewport */
+       screen and (-webkit-min-device-pixel-ratio: 3) and (max-width: 375px) /* iPhone 12 Mini Retina */ {
+  .list.mobile-view .list-header {
+    /* Force grid layout for iPhone 12 Mini */
+    display: grid !important;
+    grid-template-columns: 30px 1fr auto auto !important;
+    gap: 10px !important;
+    align-items: center !important;
+  }
+
+  .list.mobile-view .list-header .list-header-menu-icon {
+    /* Remove absolute positioning for iPhone 12 Mini */
+    position: static !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    /* Use grid positioning */
+    grid-row: 1/3 !important;
+    grid-column: 3 !important;
+    padding: 14px !important;
+    font-size: 40px !important;
+    text-align: center !important;
+  }
+
+  .list.mobile-view .list-header .list-header-handle {
+    /* Remove absolute positioning for iPhone 12 Mini */
+    position: static !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    /* Use grid positioning */
+    grid-row: 1/3 !important;
+    grid-column: 4 !important;
+    padding: 14px !important;
+    font-size: 48px !important;
+    text-align: center !important;
+  }
+
+  .list.mobile-view .list-header .list-header-name {
+    grid-row: 1 !important;
+    grid-column: 2 !important;
+    align-self: end !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    line-height: 1.2 !important;
+    padding-bottom: 2px !important;
+  }
+
+  .list.mobile-view .list-header .cardCount {
+    grid-row: 2 !important;
+    grid-column: 2 !important;
+    align-self: start !important;
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+  }
+
+  .list.mobile-view .list-header .list-header-left-icon {
+    display: grid !important;
+    grid-row: 1/3 !important;
+    grid-column: 1 !important;
+  }
+}
+
+/* iPhone device JavaScript detection fallback - fix icon positioning */
+.iphone-device .list.mobile-view .list-header {
+  /* Force grid layout for iPhone devices */
+  display: grid !important;
+  grid-template-columns: 30px 1fr auto auto !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+.iphone-device .list.mobile-view .list-header .list-header-menu-icon {
+  /* Remove absolute positioning for iPhone devices */
+  position: static !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  /* Use grid positioning */
+  grid-row: 1/3 !important;
+  grid-column: 3 !important;
+  padding: 14px !important;
+  font-size: 40px !important;
+  text-align: center !important;
+}
+
+.iphone-device .list.mobile-view .list-header .list-header-handle {
+  /* Remove absolute positioning for iPhone devices */
+  position: static !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  /* Use grid positioning */
+  grid-row: 1/3 !important;
+  grid-column: 4 !important;
+  padding: 14px !important;
+  font-size: 48px !important;
+  text-align: center !important;
+}
+
+.iphone-device .list.mobile-view .list-header .list-header-name {
+  grid-row: 1 !important;
+  grid-column: 2 !important;
+  align-self: end !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  line-height: 1.2 !important;
+  padding-bottom: 2px !important;
+}
+
+.iphone-device .list.mobile-view .list-header .cardCount {
+  grid-row: 2 !important;
+  grid-column: 2 !important;
+  align-self: start !important;
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+}
+
+.iphone-device .list.mobile-view .list-header .list-header-left-icon {
+  display: grid !important;
+  grid-row: 1/3 !important;
+  grid-column: 1 !important;
 }
 .link-board-wrapper {
   display: flex;

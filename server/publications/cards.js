@@ -1,7 +1,26 @@
 import { ReactiveCache } from '/imports/reactiveCache';
-import moment from 'moment/min/moment-with-locales';
 import escapeForRegex from 'escape-string-regexp';
 import Users from '../../models/users';
+import { 
+  formatDateTime, 
+  formatDate, 
+  formatTime, 
+  getISOWeek, 
+  isValidDate, 
+  isBefore, 
+  isAfter, 
+  isSame, 
+  add, 
+  subtract, 
+  startOf, 
+  endOf, 
+  format, 
+  parseDate, 
+  now, 
+  createDate, 
+  fromNow, 
+  calendar 
+} from '/imports/lib/dateUtils';
 import Boards from '../../models/boards';
 import Lists from '../../models/lists';
 import Swimlanes from '../../models/swimlanes';
@@ -102,37 +121,133 @@ Meteor.publish('myCards', function(sessionId) {
   return ret;
 });
 
-// Meteor.publish('dueCards', function(sessionId, allUsers = false) {
-//   check(sessionId, String);
-//   check(allUsers, Boolean);
-//
-//   // eslint-disable-next-line no-console
-//   // console.log('all users:', allUsers);
-//
-//   const queryParams = {
-//     has: [{ field: 'dueAt', exists: true }],
-//     limit: 25,
-//     skip: 0,
-//     sort: { name: 'dueAt', order: 'des' },
-//   };
-//
-//   if (!allUsers) {
-//     queryParams.users = [ReactiveCache.getCurrentUser().username];
-//   }
-//
-//   return buildQuery(sessionId, queryParams);
-// });
+// Optimized due cards publication for better performance
+Meteor.publish('dueCards', function(allUsers = false) {
+  check(allUsers, Boolean);
+  
+  const userId = this.userId;
+  if (!userId) {
+    return this.ready();
+  }
+
+  if (process.env.DEBUG === 'true') {
+    console.log('dueCards publication called for user:', userId, 'allUsers:', allUsers);
+  }
+
+  // Get user's board memberships for efficient filtering
+  const userBoards = ReactiveCache.getBoards({
+    $or: [
+      { permission: 'public' },
+      { members: { $elemMatch: { userId, isActive: true } } }
+    ]
+  }).map(board => board._id);
+
+  if (process.env.DEBUG === 'true') {
+    console.log('dueCards userBoards:', userBoards);
+    console.log('dueCards userBoards count:', userBoards.length);
+    
+    // Also check if there are any cards with due dates in the system at all
+    const allCardsWithDueDates = Cards.find({
+      type: 'cardType-card',
+      archived: false,
+      dueAt: { $exists: true, $nin: [null, ''] }
+    }).count();
+    console.log('dueCards: total cards with due dates in system:', allCardsWithDueDates);
+  }
+
+  if (userBoards.length === 0) {
+    if (process.env.DEBUG === 'true') {
+      console.log('dueCards: No boards found for user, returning ready');
+    }
+    return this.ready();
+  }
+
+  // Build optimized selector
+  const selector = {
+    type: 'cardType-card',
+    archived: false,
+    dueAt: { $exists: true, $nin: [null, ''] },
+    boardId: { $in: userBoards }
+  };
+
+  // Add user filtering if not showing all users
+  if (!allUsers) {
+    selector.$or = [
+      { members: userId },
+      { assignees: userId },
+      { userId: userId }
+    ];
+  }
+
+  const options = {
+    sort: { dueAt: 1 }, // Sort by due date ascending (oldest first)
+    limit: 100, // Limit results for performance
+    fields: {
+      title: 1,
+      dueAt: 1,
+      boardId: 1,
+      listId: 1,
+      swimlaneId: 1,
+      members: 1,
+      assignees: 1,
+      userId: 1,
+      archived: 1,
+      type: 1
+    }
+  };
+
+  if (process.env.DEBUG === 'true') {
+    console.log('dueCards selector:', JSON.stringify(selector, null, 2));
+    console.log('dueCards options:', JSON.stringify(options, null, 2));
+  }
+
+  const result = Cards.find(selector, options);
+  
+  if (process.env.DEBUG === 'true') {
+    const count = result.count();
+    console.log('dueCards publication: returning', count, 'cards');
+    if (count > 0) {
+      const sampleCards = result.fetch().slice(0, 3);
+      console.log('dueCards publication: sample cards:', sampleCards.map(c => ({
+        id: c._id,
+        title: c.title,
+        dueAt: c.dueAt,
+        boardId: c.boardId
+      })));
+    }
+  }
+
+  return result;
+});
 
 Meteor.publish('globalSearch', function(sessionId, params, text) {
   check(sessionId, String);
   check(params, Object);
   check(text, String);
 
-  // eslint-disable-next-line no-console
-  // console.log('queryParams:', params);
+  if (process.env.DEBUG === 'true') {
+    console.log('globalSearch publication called with:', { sessionId, params, text });
+  }
 
   const ret = findCards(sessionId, buildQuery(new QueryParams(params, text)));
+  if (process.env.DEBUG === 'true') {
+    console.log('globalSearch publication returning:', ret);
+  }
   return ret;
+});
+
+Meteor.publish('sessionData', function(sessionId) {
+  check(sessionId, String);
+  const userId = Meteor.userId();
+  if (process.env.DEBUG === 'true') {
+    console.log('sessionData publication called with:', { sessionId, userId });
+  }
+  
+  const cursor = SessionData.find({ userId, sessionId });
+  if (process.env.DEBUG === 'true') {
+    console.log('sessionData publication returning cursor with count:', cursor.count());
+  }
+  return cursor;
 });
 
 function buildSelector(queryParams) {
@@ -242,8 +357,12 @@ function buildSelector(queryParams) {
         selector.archived = false;
       }
     } else {
+      const userBoardIds = Boards.userBoardIds(userId, null, boardsSelector);
+      if (process.env.DEBUG === 'true') {
+        console.log('buildSelector - userBoardIds:', userBoardIds);
+      }
       selector.boardId = {
-        $in: Boards.userBoardIds(userId, null, boardsSelector),
+        $in: userBoardIds,
       };
     }
     if (endAt !== null) {
@@ -518,8 +637,9 @@ function buildSelector(queryParams) {
     }
   }
 
-  // eslint-disable-next-line no-console
-  // console.log('cards selector:', JSON.stringify(selector, null, 2));
+  if (process.env.DEBUG === 'true') {
+    console.log('buildSelector - final selector:', JSON.stringify(selector, null, 2));
+  }
 
   const query = new Query();
   query.selector = selector;
@@ -683,14 +803,17 @@ function findCards(sessionId, query) {
   const userId = Meteor.userId();
 
   // eslint-disable-next-line no-console
-  // console.log('selector:', query.selector);
-  // console.log('selector.$and:', query.selector.$and);
-  // eslint-disable-next-line no-console
-  // console.log('projection:', query.projection);
+  if (process.env.DEBUG === 'true') {
+    console.log('findCards - userId:', userId);
+    console.log('findCards - selector:', JSON.stringify(query.selector, null, 2));
+    console.log('findCards - selector.$and:', query.selector.$and);
+    console.log('findCards - projection:', query.projection);
+  }
 
   const cards = ReactiveCache.getCards(query.selector, query.projection, true);
-  // eslint-disable-next-line no-console
-  // console.log('count:', cards.count());
+  if (process.env.DEBUG === 'true') {
+    console.log('findCards - cards count:', cards ? cards.count() : 0);
+  }
 
   const update = {
     $set: {
@@ -701,7 +824,8 @@ function findCards(sessionId, query) {
       selector: SessionData.pickle(query.selector),
       projection: SessionData.pickle(query.projection),
       errors: query.errors(),
-      debug: query.getQueryParams().getPredicate(OPERATOR_DEBUG)
+      debug: query.getQueryParams().getPredicate(OPERATOR_DEBUG),
+      modifiedAt: new Date()
     },
   };
 
@@ -717,22 +841,29 @@ function findCards(sessionId, query) {
     update.$set.resultsCount = update.$set.cards.length;
   }
 
-  // eslint-disable-next-line no-console
-  // console.log('sessionId:', sessionId);
-  // eslint-disable-next-line no-console
-  // console.log('userId:', userId);
-  // eslint-disable-next-line no-console
-  // console.log('update:', update);
-  SessionData.upsert({ userId, sessionId }, update);
+  if (process.env.DEBUG === 'true') {
+    console.log('findCards - sessionId:', sessionId);
+    console.log('findCards - userId:', userId);
+    console.log('findCards - update:', JSON.stringify(update, null, 2));
+  }
+  const upsertResult = SessionData.upsert({ userId, sessionId }, update);
+  if (process.env.DEBUG === 'true') {
+    console.log('findCards - upsertResult:', upsertResult);
+  }
+  
+  // Check if the session data was actually stored
+  const storedSessionData = SessionData.findOne({ userId, sessionId });
+  if (process.env.DEBUG === 'true') {
+    console.log('findCards - stored session data:', storedSessionData);
+    console.log('findCards - stored session data count:', storedSessionData ? 1 : 0);
+  }
 
   // remove old session data
   SessionData.remove({
     userId,
     modifiedAt: {
       $lt: new Date(
-        moment()
-          .subtract(1, 'day')
-          .format(),
+        subtract(now(), 1, 'day').toISOString(),
       ),
     },
   });
@@ -776,6 +907,21 @@ function findCards(sessionId, query) {
       type: 1,
     };
 
+  // Add a small delay to ensure the session data is committed to the database
+  Meteor.setTimeout(() => {
+    const sessionDataCursor = SessionData.find({ userId, sessionId });
+    if (process.env.DEBUG === 'true') {
+      console.log('findCards - publishing session data cursor (after delay):', sessionDataCursor);
+      console.log('findCards - session data count (after delay):', sessionDataCursor.count());
+    }
+  }, 100);
+  
+  const sessionDataCursor = SessionData.find({ userId, sessionId });
+  if (process.env.DEBUG === 'true') {
+    console.log('findCards - publishing session data cursor:', sessionDataCursor);
+    console.log('findCards - session data count:', sessionDataCursor.count());
+  }
+
     return [
       cards,
       ReactiveCache.getBoards(
@@ -795,9 +941,14 @@ function findCards(sessionId, query) {
       ReactiveCache.getChecklistItems({ cardId: { $in: cards.map(c => c._id) } }, {}, true),
       ReactiveCache.getAttachments({ 'meta.cardId': { $in: cards.map(c => c._id) } }, {}, true).cursor,
       ReactiveCache.getCardComments({ cardId: { $in: cards.map(c => c._id) } }, {}, true),
-      SessionData.find({ userId, sessionId }),
+      sessionDataCursor,
     ];
   }
 
-  return [SessionData.find({ userId, sessionId })];
+  const sessionDataCursor = SessionData.find({ userId, sessionId });
+  if (process.env.DEBUG === 'true') {
+    console.log('findCards - publishing session data cursor (no cards):', sessionDataCursor);
+    console.log('findCards - session data count (no cards):', sessionDataCursor.count());
+  }
+  return [sessionDataCursor];
 }

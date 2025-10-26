@@ -5,16 +5,21 @@ import { ReactiveCache } from '/imports/reactiveCache';
 // 2. The card activity tab
 // We use this publication to paginate for these two publications.
 
-Meteor.publish('activities', (kind, id, limit, showActivities) => {
+Meteor.publish('activities', function(kind, id, limit, showActivities) {
   check(
     kind,
     Match.Where(x => {
       return ['board', 'card'].indexOf(x) !== -1;
     }),
   );
-  check(id, String);
+  check(id, Match.Maybe(String));
   check(limit, Number);
   check(showActivities, Boolean);
+
+  // Return empty cursor if id is null or undefined
+  if (!id) {
+    return this.ready();
+  }
 
   // Get linkedBoard
   let linkedElmtId = [id];

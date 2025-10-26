@@ -2,7 +2,7 @@ import { ReactiveCache, ReactiveMiniMongoIndex } from '/imports/reactiveCache';
 import { SyncedCron } from 'meteor/percolate:synced-cron';
 import { TAPi18n } from '/imports/i18n';
 import ImpersonatedUsers from './impersonatedUsers';
-import { Index, MongoDBEngine } from 'meteor/easy:search';
+// import { Index, MongoDBEngine } from 'meteor/easy:search'; // Temporarily disabled due to compatibility issues
 
 // Sandstorm context is detected using the METEOR_SETTINGS environment variable
 // in the package definition.
@@ -465,6 +465,31 @@ Users.attachSchema(
       type: Boolean,
       defaultValue: true,
     },
+    'profile.dateFormat': {
+      /**
+       * User-specified date format for displaying dates (includes time HH:MM).
+       */
+      type: String,
+      optional: true,
+      allowedValues: ['YYYY-MM-DD', 'DD-MM-YYYY', 'MM-DD-YYYY'],
+      defaultValue: 'YYYY-MM-DD',
+    },
+    'profile.zoomLevel': {
+      /**
+       * User-specified zoom level for board view (1.0 = 100%, 1.5 = 150%, etc.)
+       */
+      type: Number,
+      defaultValue: 1.0,
+      min: 0.5,
+      max: 3.0,
+    },
+    'profile.mobileMode': {
+      /**
+       * User-specified mobile/desktop mode toggle
+       */
+      type: Boolean,
+      defaultValue: false,
+    },
     services: {
       /**
        * services field of the user
@@ -555,27 +580,10 @@ Users.allow({
     return doc._id === userId;
   },
   remove(userId, doc) {
-    const adminsNumber = ReactiveCache.getUsers({
-      isAdmin: true,
-    }).length;
-    const isAdmin = ReactiveCache.getUser(
-      {
-        _id: userId,
-      },
-      {
-        fields: {
-          isAdmin: 1,
-        },
-      },
-    );
-
-    // Prevents remove of the only one administrator
-    if (adminsNumber === 1 && isAdmin && userId === doc._id) {
-      return false;
-    }
-
-    // If it's the user or an admin
-    return userId === doc._id || isAdmin;
+    // Disable direct client-side user removal for security
+    // All user removal should go through the secure server method 'removeUser'
+    // This prevents IDOR vulnerabilities and ensures proper authorization checks
+    return false;
   },
   fetch: [],
 });
@@ -589,22 +597,58 @@ Users.deny({
 });
 
 
+// Custom MongoDB engine that enforces field restrictions
+// TODO: Re-enable when easy:search compatibility is fixed
+// class SecureMongoDBEngine extends MongoDBEngine {
+//   getSearchCursor(searchObject, options) {
+//     // Always enforce field projection to prevent data leakage
+//     const secureProjection = {
+//       _id: 1,
+//       username: 1,
+//       'profile.fullname': 1,
+//       'profile.avatarUrl': 1,
+//     };
+
+//     // Override any projection passed in options
+//     const secureOptions = {
+//       ...options,
+//       projection: secureProjection,
+//     };
+
+//     return super.getSearchCursor(searchObject, secureOptions);
+//   }
+// }
+
 // Search a user in the complete server database by its name, username or emails adress. This
 // is used for instance to add a new user to a board.
-UserSearchIndex = new Index({
-  collection: Users,
-  fields: ['username', 'profile.fullname', 'profile.avatarUrl'],
-  allowedFields: ['username', 'profile.fullname', 'profile.avatarUrl'],
-  engine: new MongoDBEngine({
-    fields: function (searchObject, options) {
-      return {
+// TODO: Fix easy:search compatibility issue - temporarily disabled
+// UserSearchIndex = new Index({
+//   collection: Users,
+//   fields: ['username', 'profile.fullname', 'profile.avatarUrl'],
+//   engine: new MongoDBEngine(),
+// });
+
+// Temporary fallback - create a simple search index object
+UserSearchIndex = {
+  search: function(query, options) {
+    // Simple fallback search using MongoDB find
+    const searchRegex = new RegExp(query, 'i');
+    return Users.find({
+      $or: [
+        { username: searchRegex },
+        { 'profile.fullname': searchRegex }
+      ]
+    }, {
+      fields: {
+        _id: 1,
         username: 1,
         'profile.fullname': 1,
-        'profile.avatarUrl': 1,
-      };
-    },
-  }),
-});
+        'profile.avatarUrl': 1
+      },
+      limit: options?.limit || 20
+    });
+  }
+};
 
 Users.safeFields = {
   _id: 1,
@@ -612,6 +656,8 @@ Users.safeFields = {
   'profile.fullname': 1,
   'profile.avatarUrl': 1,
   'profile.initials': 1,
+  'profile.zoomLevel': 1,
+  'profile.mobileMode': 1,
   orgs: 1,
   teams: 1,
   authenticationMethod: 1,
@@ -838,6 +884,52 @@ Users.helpers({
     }
   },
 
+  getSwimlaneHeightFromStorage(boardId, swimlaneId) {
+    // For logged-in users, get from profile
+    if (this._id) {
+      return this.getSwimlaneHeight(boardId, swimlaneId);
+    }
+    
+    // For non-logged-in users, get from localStorage
+    try {
+      const stored = localStorage.getItem('wekan-swimlane-heights');
+      if (stored) {
+        const heights = JSON.parse(stored);
+        if (heights[boardId] && heights[boardId][swimlaneId]) {
+          return heights[boardId][swimlaneId];
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading swimlane heights from localStorage:', e);
+    }
+    
+    return -1;
+  },
+
+  setSwimlaneHeightToStorage(boardId, swimlaneId, height) {
+    // For logged-in users, save to profile
+    if (this._id) {
+      return this.setSwimlaneHeight(boardId, swimlaneId, height);
+    }
+    
+    // For non-logged-in users, save to localStorage
+    try {
+      const stored = localStorage.getItem('wekan-swimlane-heights');
+      let heights = stored ? JSON.parse(stored) : {};
+      
+      if (!heights[boardId]) {
+        heights[boardId] = {};
+      }
+      heights[boardId][swimlaneId] = height;
+      
+      localStorage.setItem('wekan-swimlane-heights', JSON.stringify(heights));
+      return true;
+    } catch (e) {
+      console.warn('Error saving swimlane height to localStorage:', e);
+      return false;
+    }
+  },
+
   /** returns all confirmed move and copy dialog field values
    * <li> the board, swimlane and list id is stored for each board
    */
@@ -966,6 +1058,11 @@ Users.helpers({
     return profile.startDayOfWeek;
   },
 
+  getDateFormat() {
+    const profile = this.profile || {};
+    return profile.dateFormat || 'YYYY-MM-DD';
+  },
+
   getTemplatesBoardId() {
     return (this.profile || {}).templatesBoardId;
   },
@@ -994,6 +1091,144 @@ Users.helpers({
     User.remove({
       _id: this._id,
     });
+  },
+
+  getListWidthFromStorage(boardId, listId) {
+    // For logged-in users, get from profile
+    if (this._id) {
+      return this.getListWidth(boardId, listId);
+    }
+    
+    // For non-logged-in users, get from localStorage
+    try {
+      const stored = localStorage.getItem('wekan-list-widths');
+      if (stored) {
+        const widths = JSON.parse(stored);
+        if (widths[boardId] && widths[boardId][listId]) {
+          return widths[boardId][listId];
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading list widths from localStorage:', e);
+    }
+    
+    return 270; // Return default width instead of -1
+  },
+
+  setListWidthToStorage(boardId, listId, width) {
+    // For logged-in users, save to profile
+    if (this._id) {
+      return this.setListWidth(boardId, listId, width);
+    }
+    
+    // For non-logged-in users, save to localStorage
+    try {
+      const stored = localStorage.getItem('wekan-list-widths');
+      let widths = stored ? JSON.parse(stored) : {};
+      
+      if (!widths[boardId]) {
+        widths[boardId] = {};
+      }
+      widths[boardId][listId] = width;
+      
+      localStorage.setItem('wekan-list-widths', JSON.stringify(widths));
+      return true;
+    } catch (e) {
+      console.warn('Error saving list width to localStorage:', e);
+      return false;
+    }
+  },
+
+  getListConstraintFromStorage(boardId, listId) {
+    // For logged-in users, get from profile
+    if (this._id) {
+      return this.getListConstraint(boardId, listId);
+    }
+    
+    // For non-logged-in users, get from localStorage
+    try {
+      const stored = localStorage.getItem('wekan-list-constraints');
+      if (stored) {
+        const constraints = JSON.parse(stored);
+        if (constraints[boardId] && constraints[boardId][listId]) {
+          return constraints[boardId][listId];
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading list constraints from localStorage:', e);
+    }
+    
+    return 550; // Return default constraint instead of -1
+  },
+
+  setListConstraintToStorage(boardId, listId, constraint) {
+    // For logged-in users, save to profile
+    if (this._id) {
+      return this.setListConstraint(boardId, listId, constraint);
+    }
+    
+    // For non-logged-in users, save to localStorage
+    try {
+      const stored = localStorage.getItem('wekan-list-constraints');
+      let constraints = stored ? JSON.parse(stored) : {};
+      
+      if (!constraints[boardId]) {
+        constraints[boardId] = {};
+      }
+      constraints[boardId][listId] = constraint;
+      
+      localStorage.setItem('wekan-list-constraints', JSON.stringify(constraints));
+      return true;
+    } catch (e) {
+      console.warn('Error saving list constraint to localStorage:', e);
+      return false;
+    }
+  },
+
+  getSwimlaneHeightFromStorage(boardId, swimlaneId) {
+    // For logged-in users, get from profile
+    if (this._id) {
+      return this.getSwimlaneHeight(boardId, swimlaneId);
+    }
+    
+    // For non-logged-in users, get from localStorage
+    try {
+      const stored = localStorage.getItem('wekan-swimlane-heights');
+      if (stored) {
+        const heights = JSON.parse(stored);
+        if (heights[boardId] && heights[boardId][swimlaneId]) {
+          return heights[boardId][swimlaneId];
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading swimlane heights from localStorage:', e);
+    }
+    
+    return -1; // Return -1 if not found
+  },
+
+  setSwimlaneHeightToStorage(boardId, swimlaneId, height) {
+    // For logged-in users, save to profile
+    if (this._id) {
+      return this.setSwimlaneHeight(boardId, swimlaneId, height);
+    }
+    
+    // For non-logged-in users, save to localStorage
+    try {
+      const stored = localStorage.getItem('wekan-swimlane-heights');
+      let heights = stored ? JSON.parse(stored) : {};
+      
+      if (!heights[boardId]) {
+        heights[boardId] = {};
+      }
+      heights[boardId][swimlaneId] = height;
+      
+      localStorage.setItem('wekan-swimlane-heights', JSON.stringify(heights));
+      return true;
+    } catch (e) {
+      console.warn('Error saving swimlane height to localStorage:', e);
+      return false;
+    }
   },
 });
 
@@ -1231,6 +1466,14 @@ Users.mutations({
     };
   },
 
+  setDateFormat(dateFormat) {
+    return {
+      $set: {
+        'profile.dateFormat': dateFormat,
+      },
+    };
+  },
+
   setBoardView(view) {
     return {
       $set: {
@@ -1277,9 +1520,69 @@ Users.mutations({
       },
     };
   },
+
+  setZoomLevel(level) {
+    return {
+      $set: {
+        'profile.zoomLevel': level,
+      },
+    };
+  },
+
+  setMobileMode(enabled) {
+    return {
+      $set: {
+        'profile.mobileMode': enabled,
+      },
+    };
+  },
 });
 
 Meteor.methods({
+  // Secure user removal method with proper authorization checks
+  removeUser(targetUserId) {
+    check(targetUserId, String);
+
+    const currentUserId = Meteor.userId();
+    if (!currentUserId) {
+      throw new Meteor.Error('not-authorized', 'User must be logged in');
+    }
+
+    const currentUser = ReactiveCache.getUser(currentUserId);
+    if (!currentUser) {
+      throw new Meteor.Error('not-authorized', 'Current user not found');
+    }
+
+    const targetUser = ReactiveCache.getUser(targetUserId);
+    if (!targetUser) {
+      throw new Meteor.Error('user-not-found', 'Target user not found');
+    }
+
+    // Check if user is trying to delete themselves
+    if (currentUserId === targetUserId) {
+      // User can delete themselves
+      Users.remove(targetUserId);
+      return { success: true, message: 'User deleted successfully' };
+    }
+
+    // Check if current user is admin
+    if (!currentUser.isAdmin) {
+      throw new Meteor.Error('not-authorized', 'Only administrators can delete other users');
+    }
+
+    // Check if target user is the last admin
+    const adminsNumber = ReactiveCache.getUsers({
+      isAdmin: true,
+    }).length;
+
+    if (adminsNumber === 1 && targetUser.isAdmin) {
+      throw new Meteor.Error('not-authorized', 'Cannot delete the last administrator');
+    }
+
+    // Admin can delete non-admin users
+    Users.remove(targetUserId);
+    return { success: true, message: 'User deleted successfully' };
+  },
   setListSortBy(value) {
     check(value, String);
     ReactiveCache.getCurrentUser().setListSortBy(value);
@@ -1316,6 +1619,10 @@ Meteor.methods({
     check(startDay, Number);
     ReactiveCache.getCurrentUser().setStartDayOfWeek(startDay);
   },
+  changeDateFormat(dateFormat) {
+    check(dateFormat, String);
+    ReactiveCache.getCurrentUser().setDateFormat(dateFormat);
+  },
   applyListWidth(boardId, listId, width, constraint) {
     check(boardId, String);
     check(listId, String);
@@ -1331,6 +1638,40 @@ Meteor.methods({
     check(height, Number);
     const user = ReactiveCache.getCurrentUser();
     user.setSwimlaneHeight(boardId, swimlaneId, height);
+  },
+
+  applySwimlaneHeightToStorage(boardId, swimlaneId, height) {
+    check(boardId, String);
+    check(swimlaneId, String);
+    check(height, Number);
+    const user = ReactiveCache.getCurrentUser();
+    if (user) {
+      user.setSwimlaneHeightToStorage(boardId, swimlaneId, height);
+    }
+    // For non-logged-in users, the client-side code will handle localStorage
+  },
+
+  applyListWidthToStorage(boardId, listId, width, constraint) {
+    check(boardId, String);
+    check(listId, String);
+    check(width, Number);
+    check(constraint, Number);
+    const user = ReactiveCache.getCurrentUser();
+    if (user) {
+      user.setListWidthToStorage(boardId, listId, width);
+      user.setListConstraintToStorage(boardId, listId, constraint);
+    }
+    // For non-logged-in users, the client-side code will handle localStorage
+  },
+  setZoomLevel(level) {
+    check(level, Number);
+    const user = ReactiveCache.getCurrentUser();
+    user.setZoomLevel(level);
+  },
+  setMobileMode(enabled) {
+    check(enabled, Boolean);
+    const user = ReactiveCache.getCurrentUser();
+    user.setMobileMode(enabled);
   },
 });
 
@@ -2031,7 +2372,7 @@ if (Meteor.isServer) {
         const future3 = new Future();
         Boards.insert(
           {
-            title: TAPi18n.__('templates'),
+            title: TAPi18n && TAPi18n.i18n ? TAPi18n.__('templates') : 'Templates',
             permission: 'private',
             type: 'template-container',
           },
@@ -2047,7 +2388,7 @@ if (Meteor.isServer) {
             // Insert the card templates swimlane
             Swimlanes.insert(
               {
-                title: TAPi18n.__('card-templates-swimlane'),
+                title: TAPi18n && TAPi18n.i18n ? TAPi18n.__('card-templates-swimlane') : 'Card Templates',
                 boardId,
                 sort: 1,
                 type: 'template-container',
@@ -2067,7 +2408,7 @@ if (Meteor.isServer) {
             // Insert the list templates swimlane
             Swimlanes.insert(
               {
-                title: TAPi18n.__('list-templates-swimlane'),
+                title: TAPi18n && TAPi18n.i18n ? TAPi18n.__('list-templates-swimlane') : 'List Templates',
                 boardId,
                 sort: 2,
                 type: 'template-container',
@@ -2087,7 +2428,7 @@ if (Meteor.isServer) {
             // Insert the board templates swimlane
             Swimlanes.insert(
               {
-                title: TAPi18n.__('board-templates-swimlane'),
+                title: TAPi18n && TAPi18n.i18n ? TAPi18n.__('board-templates-swimlane') : 'Board Templates',
                 boardId,
                 sort: 3,
                 type: 'template-container',
@@ -2683,6 +3024,51 @@ if (Meteor.isServer) {
         code: 200,
         data: error,
       });
+    }
+  });
+
+  // Server-side method to sanitize user data for search results
+  Meteor.methods({
+    sanitizeUserForSearch(userData) {
+      check(userData, Object);
+
+      // Only allow safe fields for user search
+      const safeFields = {
+        _id: 1,
+        username: 1,
+        'profile.fullname': 1,
+        'profile.avatarUrl': 1,
+        'profile.initials': 1,
+        'emails.address': 1,
+        'emails.verified': 1,
+        authenticationMethod: 1,
+        isAdmin: 1,
+        loginDisabled: 1,
+        teams: 1,
+        orgs: 1,
+      };
+
+      const sanitized = {};
+      for (const field of Object.keys(safeFields)) {
+        if (userData[field] !== undefined) {
+          sanitized[field] = userData[field];
+        }
+      }
+
+      // Ensure sensitive fields are never included
+      delete sanitized.services;
+      delete sanitized.resume;
+      delete sanitized.email;
+      delete sanitized.createdAt;
+      delete sanitized.modifiedAt;
+      delete sanitized.sessionData;
+      delete sanitized.importUsernames;
+
+      if (process.env.DEBUG === 'true') {
+        console.log('Sanitized user data for search:', Object.keys(sanitized));
+      }
+
+      return sanitized;
     }
   });
 }

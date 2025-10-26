@@ -1,5 +1,5 @@
 name: wekan
-version: '7.92'
+version: '8.15'
 base: core24
 summary: Open Source kanban
 description: |
@@ -13,7 +13,16 @@ description: |
 confinement: strict
 grade: stable
 
-# Update platforms format to correct syntax for core24
+# Metadata fields
+title: Wekan
+contact: https://github.com/wekan/wekan/issues
+license: MIT
+donation: https://wekan.fi/commercial-support/
+issues: https://github.com/wekan/wekan/issues
+source-code: https://github.com/wekan/wekan
+website: https://wekan.fi
+
+# Use platforms instead of architectures for core24 base
 platforms:
   amd64:
     build-on: amd64
@@ -66,9 +75,10 @@ apps:
         command: ./bin/mongodb-restore
         plugs: [network, network-bind]
 
+
 parts:
     mongodb:
-        source: https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-7.0.21.tgz
+        source: https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-7.0.25.tgz
         plugin: dump
         stage-packages:
             - libssl3
@@ -99,6 +109,7 @@ parts:
         source: https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-100.12.2.tgz
         plugin: dump
 
+
     wekan:
         source: .
         plugin: npm
@@ -117,7 +128,6 @@ parts:
             - execstack
             - nodejs
             - npm
-            - git  # Add git for cloning migratemongo
         stage-packages:
             - libfontconfig1
         override-build: |
@@ -156,9 +166,9 @@ parts:
             # Cleanup
             mkdir .build
             cd .build
-            wget https://github.com/wekan/wekan/releases/download/v7.92/wekan-7.92-amd64.zip
-            unzip wekan-7.92-amd64.zip
-            rm wekan-7.92-amd64.zip
+            wget https://github.com/wekan/wekan/releases/download/v8.15/wekan-8.15-amd64.zip
+            unzip wekan-8.15-amd64.zip
+            rm wekan-8.15-amd64.zip
             cd ..
             ##cd .build/bundle
             ##find . -type d -name '*-garbage*' | xargs rm -rf
@@ -183,12 +193,6 @@ parts:
             cp .build/bundle/.node_version.txt $SNAPCRAFT_PART_INSTALL/
             rm -f $SNAPCRAFT_PART_INSTALL/lib/node_modules/wekan
 
-            # Migrate MongoDB 3 to 6 - clone directly from git instead of downloading zip
-            echo "Cloning migratemongo repository..."
-            git clone https://github.com/wekan/migratemongo.git
-            echo "Copy migratemongo files to install directory..."
-            cp -pR migratemongo $SNAPCRAFT_PART_INSTALL/
-            rm -rf migratemongo
 
             # Delete phantomjs that is in accounts-lockout
             #rm -rf $SNAPCRAFT_PART_INSTALL/programs/server/npm/node_modules/meteor/lucasantoniassi_accounts-lockout/node_modules/phantomjs-prebuilt

@@ -1,6 +1,18 @@
 const fs = require('fs');
 const os = require('os');
 
+// Configure SyncedCron to suppress console logging
+// This must be done before any SyncedCron operations
+if (Meteor.isServer) {
+  const { SyncedCron } = require('meteor/percolate:synced-cron');
+  SyncedCron.config({
+    log: false, // Disable console logging
+    collectionName: 'cronJobs', // Use custom collection name
+    utc: false, // Use local time
+    collectionTTL: 172800 // 2 days TTL
+  });
+}
+
 let errors = [];
 if (!process.env.WRITABLE_PATH) {
   errors.push("WRITABLE_PATH environment variable missing and/or unset, please configure !");
@@ -24,3 +36,19 @@ if (errors.length > 0) {
   console.error("\n\n");
   process.exit(1);
 }
+
+// Import cron job storage for persistent job tracking
+import './cronJobStorage';
+
+// Import migrations
+import './migrations/fixMissingListsMigration';
+import './migrations/fixAvatarUrls';
+import './migrations/fixAllFileUrls';
+import './migrations/comprehensiveBoardMigration';
+
+// Import file serving routes
+import './routes/universalFileServer';
+
+// Note: Automatic migrations are disabled - migrations only run when opening boards
+// import './boardMigrationDetector';
+// import './cronMigrationManager';

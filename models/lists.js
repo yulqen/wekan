@@ -1,5 +1,6 @@
 import { ReactiveCache } from '/imports/reactiveCache';
 import { ALLOWED_COLORS } from '/config/const';
+import PositionHistory from './positionHistory';
 
 Lists = new Mongo.Collection('lists');
 
@@ -50,9 +51,10 @@ Lists.attachSchema(
     },
     swimlaneId: {
       /**
-       * the swimlane associated to this list. Used for templates
+       * the swimlane associated to this list. Optional for backward compatibility
        */
       type: String,
+      optional: true,
       defaultValue: '',
     },
     createdAt: {
@@ -196,7 +198,7 @@ Lists.helpers({
       _id = existingListWithSameName._id;
     } else {
       delete this._id;
-      delete this.swimlaneId;
+      this.swimlaneId = swimlaneId; // Set the target swimlane for the copied list
       _id = Lists.insert(this);
     }
 
@@ -231,6 +233,7 @@ Lists.helpers({
         type: this.type,
         archived: false,
         wipLimit: this.wipLimit,
+        swimlaneId: swimlaneId, // Set the target swimlane for the moved list
       });
     }
 
@@ -312,6 +315,12 @@ Lists.helpers({
 
 Lists.mutations({
   rename(title) {
+    // Basic client-side validation - server will handle full sanitization
+    if (typeof title === 'string') {
+      // Basic length check to prevent abuse
+      const sanitizedTitle = title.length > 1000 ? title.substring(0, 1000) : title;
+      return { $set: { title: sanitizedTitle } };
+    }
     return { $set: { title } };
   },
   star(enable = true) {
@@ -445,6 +454,14 @@ if (Meteor.isServer) {
       // list is deleted
       title: doc.title,
     });
+
+    // Track original position for new lists
+    Meteor.setTimeout(() => {
+      const list = Lists.findOne(doc._id);
+      if (list) {
+        list.trackOriginalPosition();
+      }
+    }, 100);
   });
 
   Lists.before.remove((userId, doc) => {
@@ -585,11 +602,173 @@ if (Meteor.isServer) {
         title: req.body.title,
         boardId: paramBoardId,
         sort: board.lists().length,
+        swimlaneId: req.body.swimlaneId || board.getDefaultSwimline()._id, // Use provided swimlaneId or default
       });
       JsonRoutes.sendResult(res, {
         code: 200,
         data: {
           _id: id,
+        },
+      });
+    } catch (error) {
+      JsonRoutes.sendResult(res, {
+        code: 200,
+        data: error,
+      });
+    }
+  });
+
+  /**
+   * @operation edit_list
+   * @summary Edit a List
+   *
+   * @description This updates a list on a board.
+   * You can update the title, color, wipLimit, starred, and collapsed properties.
+   *
+   * @param {string} boardId the board ID
+   * @param {string} listId the ID of the list to update
+   * @param {string} [title] the new title of the list
+   * @param {string} [color] the new color of the list
+   * @param {Object} [wipLimit] the WIP limit configuration
+   * @param {boolean} [starred] whether the list is starred
+   * @param {boolean} [collapsed] whether the list is collapsed
+   * @return_type {_id: string}
+   */
+  JsonRoutes.add('PUT', '/api/boards/:boardId/lists/:listId', function(
+    req,
+    res,
+  ) {
+    try {
+      const paramBoardId = req.params.boardId;
+      const paramListId = req.params.listId;
+      let updated = false;
+      Authentication.checkBoardAccess(req.userId, paramBoardId);
+
+      const list = ReactiveCache.getList({
+        _id: paramListId,
+        boardId: paramBoardId,
+        archived: false,
+      });
+
+      if (!list) {
+        JsonRoutes.sendResult(res, {
+          code: 404,
+          data: { error: 'List not found' },
+        });
+        return;
+      }
+
+      // Update title if provided
+      if (req.body.title) {
+        // Basic client-side validation - server will handle full sanitization
+        const newTitle = req.body.title.length > 1000 ? req.body.title.substring(0, 1000) : req.body.title;
+
+        if (process.env.DEBUG === 'true' && newTitle !== req.body.title) {
+          console.warn('Sanitized list title input:', req.body.title, '->', newTitle);
+        }
+
+        Lists.direct.update(
+          {
+            _id: paramListId,
+            boardId: paramBoardId,
+            archived: false,
+          },
+          {
+            $set: {
+              title: newTitle,
+            },
+          },
+        );
+        updated = true;
+      }
+
+      // Update color if provided
+      if (req.body.color) {
+        const newColor = req.body.color;
+        Lists.direct.update(
+          {
+            _id: paramListId,
+            boardId: paramBoardId,
+            archived: false,
+          },
+          {
+            $set: {
+              color: newColor,
+            },
+          },
+        );
+        updated = true;
+      }
+
+      // Update starred status if provided
+      if (req.body.hasOwnProperty('starred')) {
+        const newStarred = req.body.starred;
+        Lists.direct.update(
+          {
+            _id: paramListId,
+            boardId: paramBoardId,
+            archived: false,
+          },
+          {
+            $set: {
+              starred: newStarred,
+            },
+          },
+        );
+        updated = true;
+      }
+
+      // Update collapsed status if provided
+      if (req.body.hasOwnProperty('collapsed')) {
+        const newCollapsed = req.body.collapsed;
+        Lists.direct.update(
+          {
+            _id: paramListId,
+            boardId: paramBoardId,
+            archived: false,
+          },
+          {
+            $set: {
+              collapsed: newCollapsed,
+            },
+          },
+        );
+        updated = true;
+      }
+
+      // Update wipLimit if provided
+      if (req.body.wipLimit) {
+        const newWipLimit = req.body.wipLimit;
+        Lists.direct.update(
+          {
+            _id: paramListId,
+            boardId: paramBoardId,
+            archived: false,
+          },
+          {
+            $set: {
+              wipLimit: newWipLimit,
+            },
+          },
+        );
+        updated = true;
+      }
+
+      // Check if update is true or false
+      if (!updated) {
+        JsonRoutes.sendResult(res, {
+          code: 404,
+          data: {
+            message: 'Error',
+          },
+        });
+        return;
+      }
+
+      JsonRoutes.sendResult(res, {
+        code: 200,
+        data: {
+          _id: paramListId,
         },
       });
     } catch (error) {
@@ -634,5 +813,78 @@ if (Meteor.isServer) {
     }
   });
 }
+
+// Position history tracking methods
+Lists.helpers({
+  /**
+   * Track the original position of this list
+   */
+  trackOriginalPosition() {
+    const existingHistory = PositionHistory.findOne({
+      boardId: this.boardId,
+      entityType: 'list',
+      entityId: this._id,
+    });
+
+    if (!existingHistory) {
+      PositionHistory.insert({
+        boardId: this.boardId,
+        entityType: 'list',
+        entityId: this._id,
+        originalPosition: {
+          sort: this.sort,
+          title: this.title,
+        },
+        originalSwimlaneId: this.swimlaneId || null,
+        originalTitle: this.title,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  },
+
+  /**
+   * Get the original position history for this list
+   */
+  getOriginalPosition() {
+    return PositionHistory.findOne({
+      boardId: this.boardId,
+      entityType: 'list',
+      entityId: this._id,
+    });
+  },
+
+  /**
+   * Check if this list has moved from its original position
+   */
+  hasMovedFromOriginalPosition() {
+    const history = this.getOriginalPosition();
+    if (!history) return false;
+    
+    const currentSwimlaneId = this.swimlaneId || null;
+    return history.originalPosition.sort !== this.sort ||
+           history.originalSwimlaneId !== currentSwimlaneId;
+  },
+
+  /**
+   * Get a description of the original position
+   */
+  getOriginalPositionDescription() {
+    const history = this.getOriginalPosition();
+    if (!history) return 'No original position data';
+    
+    const swimlaneInfo = history.originalSwimlaneId ? 
+      ` in swimlane ${history.originalSwimlaneId}` : 
+      ' in default swimlane';
+    return `Original position: ${history.originalPosition.sort || 0}${swimlaneInfo}`;
+  },
+
+  /**
+   * Get the effective swimlane ID (for backward compatibility)
+   */
+  getEffectiveSwimlaneId() {
+    return this.swimlaneId || null;
+  },
+});
 
 export default Lists;

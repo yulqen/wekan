@@ -1,4 +1,5 @@
 import { ReactiveCache } from '/imports/reactiveCache';
+import LockoutSettings from '/models/lockoutSettings';
 
 const orgsPerPage = 25;
 const teamsPerPage = 25;
@@ -14,14 +15,16 @@ BlazeComponent.extendComponent({
     this.error = new ReactiveVar('');
     this.loading = new ReactiveVar(false);
     this.orgSetting = new ReactiveVar(true);
-    this.teamSetting = new ReactiveVar(true);
-    this.peopleSetting = new ReactiveVar(true);
+    this.teamSetting = new ReactiveVar(false);
+    this.peopleSetting = new ReactiveVar(false);
+    this.lockedUsersSetting = new ReactiveVar(false);
     this.findOrgsOptions = new ReactiveVar({});
     this.findTeamsOptions = new ReactiveVar({});
     this.findUsersOptions = new ReactiveVar({});
     this.numberOrgs = new ReactiveVar(0);
     this.numberTeams = new ReactiveVar(0);
     this.numberPeople = new ReactiveVar(0);
+    this.userFilterType = new ReactiveVar('all');
 
     this.page = new ReactiveVar(1);
     this.loadNextPageLocked = false;
@@ -92,6 +95,34 @@ BlazeComponent.extendComponent({
             this.filterPeople();
           }
         },
+        'change #userFilterSelect'(event) {
+          const filterType = $(event.target).val();
+          this.userFilterType.set(filterType);
+          this.filterPeople();
+        },
+        'click #unlockAllUsers'(event) {
+          event.preventDefault();
+          if (confirm(TAPi18n.__('accounts-lockout-confirm-unlock-all'))) {
+            Meteor.call('unlockAllUsers', (error) => {
+              if (error) {
+                console.error('Error unlocking all users:', error);
+              } else {
+                // Show a brief success message
+                const message = document.createElement('div');
+                message.className = 'unlock-all-success';
+                message.textContent = TAPi18n.__('accounts-lockout-all-users-unlocked');
+                document.body.appendChild(message);
+
+                // Remove the message after a short delay
+                setTimeout(() => {
+                  if (message.parentNode) {
+                    message.parentNode.removeChild(message);
+                  }
+                }, 3000);
+              }
+            });
+          }
+        },
         'click #newOrgButton'() {
           Popup.open('newOrg');
         },
@@ -104,23 +135,54 @@ BlazeComponent.extendComponent({
         'click a.js-org-menu': this.switchMenu,
         'click a.js-team-menu': this.switchMenu,
         'click a.js-people-menu': this.switchMenu,
+        'click a.js-locked-users-menu': this.switchMenu,
       },
     ];
   },
   filterPeople() {
     const value = $('#searchInput').first().val();
-    if (value === '') {
-      this.findUsersOptions.set({});
-    } else {
+    const filterType = this.userFilterType.get();
+    const currentTime = Number(new Date());
+
+    let query = {};
+
+    // Apply text search filter if there's a search value
+    if (value !== '') {
       const regex = new RegExp(value, 'i');
-      this.findUsersOptions.set({
+      query = {
         $or: [
           { username: regex },
           { 'profile.fullname': regex },
           { 'emails.address': regex },
         ],
-      });
+      };
     }
+
+    // Apply filter based on selected option
+    switch (filterType) {
+      case 'locked':
+        // Show only locked users
+        query['services.accounts-lockout.unlockTime'] = { $gt: currentTime };
+        break;
+      case 'active':
+        // Show only active users (loginDisabled is false or undefined)
+        query['loginDisabled'] = { $ne: true };
+        break;
+      case 'inactive':
+        // Show only inactive users (loginDisabled is true)
+        query['loginDisabled'] = true;
+        break;
+      case 'admin':
+        // Show only admin users (isAdmin is true)
+        query['isAdmin'] = true;
+        break;
+      case 'all':
+      default:
+        // Show all users, no additional filter
+        break;
+    }
+
+    this.findUsersOptions.set(query);
   },
   loadNextPage() {
     if (this.loadNextPageLocked === false) {
@@ -145,26 +207,35 @@ BlazeComponent.extendComponent({
     this.loading.set(w);
   },
   orgList() {
+    const limitOrgs = this.page.get() * orgsPerPage;
     const orgs = ReactiveCache.getOrgs(this.findOrgsOptions.get(), {
       sort: { orgDisplayName: 1 },
+      limit: limitOrgs,
       fields: { _id: true },
     });
+    // Count only the items currently loaded to browser, not total from database
     this.numberOrgs.set(orgs.length);
     return orgs;
   },
   teamList() {
+    const limitTeams = this.page.get() * teamsPerPage;
     const teams = ReactiveCache.getTeams(this.findTeamsOptions.get(), {
       sort: { teamDisplayName: 1 },
+      limit: limitTeams,
       fields: { _id: true },
     });
+    // Count only the items currently loaded to browser, not total from database
     this.numberTeams.set(teams.length);
     return teams;
   },
   peopleList() {
+    const limitUsers = this.page.get() * usersPerPage;
     const users = ReactiveCache.getUsers(this.findUsersOptions.get(), {
       sort: { username: 1 },
+      limit: limitUsers,
       fields: { _id: true },
     });
+    // Count only the items currently loaded to browser, not total from database
     this.numberPeople.set(users.length);
     return users;
   },
@@ -186,6 +257,16 @@ BlazeComponent.extendComponent({
       this.orgSetting.set('org-setting' === targetID);
       this.teamSetting.set('team-setting' === targetID);
       this.peopleSetting.set('people-setting' === targetID);
+      this.lockedUsersSetting.set('locked-users-setting' === targetID);
+
+      // When switching to locked users tab, refresh the locked users list
+      if ('locked-users-setting' === targetID) {
+        // Find the lockedUsersGeneral component and call refreshLockedUsers
+        const lockedUsersComponent = Blaze.getView($('.main-body')[0])._templateInstance;
+        if (lockedUsersComponent && lockedUsersComponent.refreshLockedUsers) {
+          lockedUsersComponent.refreshLockedUsers();
+        }
+      }
     }
   },
 }).register('people');
@@ -206,7 +287,35 @@ Template.peopleRow.helpers({
   userData() {
     return ReactiveCache.getUser(this.userId);
   },
+  isUserLocked() {
+    const user = ReactiveCache.getUser(this.userId);
+    if (!user) return false;
+
+    // Check if user has accounts-lockout with unlockTime property
+    if (user.services &&
+        user.services['accounts-lockout'] &&
+        user.services['accounts-lockout'].unlockTime) {
+
+      // Check if unlockTime is in the future
+      const currentTime = Number(new Date());
+      return user.services['accounts-lockout'].unlockTime > currentTime;
+    }
+
+    return false;
+  }
 });
+
+// Initialize filter dropdown
+Template.people.rendered = function() {
+  const template = this;
+
+  // Set the initial value of the dropdown
+  Tracker.afterFlush(function() {
+    if (template.findAll('#userFilterSelect').length) {
+      $('#userFilterSelect').val('all');
+    }
+  });
+};
 
 Template.editUserPopup.onCreated(function () {
   this.authenticationMethods = new ReactiveVar([]);
@@ -414,6 +523,49 @@ BlazeComponent.extendComponent({
               document.getElementById("divAddOrRemoveTeam").style.display = 'block';
             else
               document.getElementById("divAddOrRemoveTeam").style.display = 'none';
+        },
+        'click .js-toggle-active-status': function(ev) {
+            ev.preventDefault();
+            const userId = this.userId;
+            const user = ReactiveCache.getUser(userId);
+
+            if (!user) return;
+
+            // Toggle loginDisabled status
+            const isActive = !(user.loginDisabled === true);
+
+            // Update the user's active status
+            Users.update(userId, {
+              $set: {
+                loginDisabled: isActive
+              }
+            });
+        },
+        'click .js-toggle-lock-status': function(ev){
+            ev.preventDefault();
+            const userId = this.userId;
+            const user = ReactiveCache.getUser(userId);
+
+            if (!user) return;
+
+            // Check if user is currently locked
+            const isLocked = user.services &&
+                user.services['accounts-lockout'] &&
+                user.services['accounts-lockout'].unlockTime &&
+                user.services['accounts-lockout'].unlockTime > Number(new Date());
+
+            if (isLocked) {
+              // Unlock the user
+              Meteor.call('unlockUser', userId, (error) => {
+                if (error) {
+                  console.error('Error unlocking user:', error);
+                }
+              });
+            } else {
+              // Lock the user - this is optional, you may want to only allow unlocking
+              // If you want to implement locking too, you would need a server method for it
+              // For now, we'll leave this as a no-op
+            }
         },
       },
     ];
@@ -1130,23 +1282,30 @@ Template.settingsUserPopup.events({
   },
   'click #deleteButton'(event) {
     event.preventDefault();
-    Users.remove(this.userId);
-    /*
-    // Delete user is enabled, but you should remove user from all boards
-    // before deleting user, because there is possibility of leaving empty user avatars
-    // to boards. You can remove non-existing user ids manually from database,
-    // if that happens.
-    //. See:
-    // - wekan/client/components/settings/peopleBody.jade deleteButton
-    // - wekan/client/components/settings/peopleBody.js deleteButton
-    // - wekan/client/components/sidebar/sidebar.js Popup.afterConfirm('removeMember'
-    //   that does now remove member from board, card members and assignees correctly,
-    //   but that should be used to remove user from all boards similarly
-    // - wekan/models/users.js Delete is not enabled
-    //
-    //
-    */
-    Popup.back();
+
+    // Use secure server method instead of direct client-side removal
+    Meteor.call('removeUser', this.userId, (error, result) => {
+      if (error) {
+        if (process.env.DEBUG === 'true') {
+          console.error('Error removing user:', error);
+        }
+        // Show error message to user
+        if (error.error === 'not-authorized') {
+          alert('You are not authorized to delete this user.');
+        } else if (error.error === 'user-not-found') {
+          alert('User not found.');
+        } else if (error.error === 'not-authorized' && error.reason === 'Cannot delete the last administrator') {
+          alert('Cannot delete the last administrator.');
+        } else {
+          alert('Error deleting user: ' + error.reason);
+        }
+      } else {
+        if (process.env.DEBUG === 'true') {
+          console.log('User deleted successfully:', result);
+        }
+        Popup.back();
+      }
+    });
   },
 });
 

@@ -1,5 +1,6 @@
 import { ReactiveCache } from '/imports/reactiveCache';
 import { ALLOWED_COLORS } from '/config/const';
+import PositionHistory from './positionHistory';
 
 Swimlanes = new Mongo.Collection('swimlanes');
 
@@ -173,6 +174,7 @@ Swimlanes.helpers({
           type: list.type,
           archived: false,
           wipLimit: list.wipLimit,
+          swimlaneId: toSwimlaneId, // Set the target swimlane for the copied list
         });
       }
 
@@ -209,21 +211,20 @@ Swimlanes.helpers({
     return this.draggableLists();
   },
   newestLists() {
-    // sorted lists from newest to the oldest, by its creation date or its cards' last modification date
+    // Revert to shared lists across swimlanes: filter by board only
     return ReactiveCache.getLists(
       {
         boardId: this.boardId,
-        swimlaneId: { $in: [this._id, ''] },
         archived: false,
       },
       { sort: { modifiedAt: -1 } },
     );
   },
   draggableLists() {
+    // Revert to shared lists across swimlanes: filter by board only
     return ReactiveCache.getLists(
       {
         boardId: this.boardId,
-        swimlaneId: { $in: [this._id, ''] },
         //archived: false,
       },
       { sort: ['sort'] },
@@ -231,7 +232,12 @@ Swimlanes.helpers({
   },
 
   myLists() {
-    return ReactiveCache.getLists({ swimlaneId: this._id });
+    // Return per-swimlane lists: provide lists specific to this swimlane
+    return ReactiveCache.getLists({ 
+      boardId: this.boardId,
+      swimlaneId: this._id,
+      archived: false
+    });
   },
 
   allCards() {
@@ -353,6 +359,14 @@ if (Meteor.isServer) {
       boardId: doc.boardId,
       swimlaneId: doc._id,
     });
+
+    // Track original position for new swimlanes
+    Meteor.setTimeout(() => {
+      const swimlane = Swimlanes.findOne(doc._id);
+      if (swimlane) {
+        swimlane.trackOriginalPosition();
+      }
+    }, 100);
   });
 
   Swimlanes.before.remove(function(userId, doc) {
@@ -600,5 +614,65 @@ if (Meteor.isServer) {
     },
   );
 }
+
+// Position history tracking methods
+Swimlanes.helpers({
+  /**
+   * Track the original position of this swimlane
+   */
+  trackOriginalPosition() {
+    const existingHistory = PositionHistory.findOne({
+      boardId: this.boardId,
+      entityType: 'swimlane',
+      entityId: this._id,
+    });
+
+    if (!existingHistory) {
+      PositionHistory.insert({
+        boardId: this.boardId,
+        entityType: 'swimlane',
+        entityId: this._id,
+        originalPosition: {
+          sort: this.sort,
+          title: this.title,
+        },
+        originalTitle: this.title,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  },
+
+  /**
+   * Get the original position history for this swimlane
+   */
+  getOriginalPosition() {
+    return PositionHistory.findOne({
+      boardId: this.boardId,
+      entityType: 'swimlane',
+      entityId: this._id,
+    });
+  },
+
+  /**
+   * Check if this swimlane has moved from its original position
+   */
+  hasMovedFromOriginalPosition() {
+    const history = this.getOriginalPosition();
+    if (!history) return false;
+    
+    return history.originalPosition.sort !== this.sort;
+  },
+
+  /**
+   * Get a description of the original position
+   */
+  getOriginalPositionDescription() {
+    const history = this.getOriginalPosition();
+    if (!history) return 'No original position data';
+    
+    return `Original position: ${history.originalPosition.sort || 0}`;
+  },
+});
 
 export default Swimlanes;

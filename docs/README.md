@@ -7,27 +7,30 @@ Wekan allows to create **Boards**, on which **Cards** can be moved around betwee
 ## What is special about Wekan?
 Wekan is distributed under the [MIT License], allowing anyone to easily work with it and modify it. It is perfect for anyone that needs a slick kanban board but doesn't want to use third party services, which are out of user control. Wekan can be hosted on your own server with very little effort, guaranteeing that you have all the time full control over your data and can make sure no one else has access to it and that it won't just vanish from one day to another, that is, if you do backups.
 
-## Getting started
-There are various ways to get started with Wekan:
-
-* you can use the [Sandstorm app demo], 
-* you could [[install|Install-and-Update]] it right away on your own server, or
-* you could look through our [[contributing guidelines|Developer Documentation]]  to get involved in the project.
-
-If you still have questions, check out the [[FAQ]]!
-
 <a name="Wekan"></a>Wekan
+
+# Install
+
+* https://wekan.fi/install/
+
+# SaaS
+
+* https://wekan.fi/saas/
+
+# Support
+
+* Free Public Open Source Support, bugs and feature requests: https://github.com/wekan/wekan/issues
+  * [Debugging](DeveloperDocs/Debugging.md)
+* Paid Private Commercial Support, paid features/fixes/support/hosting: https://wekan.fi/commercial-support/
 
 # <a name="General"></a>General
 
-* [Deep Dive Into WeKan](DeveloperDocs/Deep-Dive-Into-WeKan.md)
-* [Meteor WeKan Roadmap](https://boards.wekan.team/b/D2SzJKZDS4Z48yeQH/wekan-open-source-kanban-board-with-mit-license) - board at Wekan demo
-* [Multiverse WeKan Roadmap](FAQ/WeKan-Multiverse-Roadmap.md)
-* OLD Docs/Manual: https://github.com/wekan/wekan/discussions/4522
+* Current Meteor 2 WeKan Features: [Deep Dive Into WeKan](DeveloperDocs/Deep-Dive-Into-WeKan.md)
+* [WeKan Roadmap kanban board](https://boards.wekan.team/b/D2SzJKZDS4Z48yeQH/wekan-open-source-kanban-board-with-mit-license) - board at Wekan demo
+* Future WeKan prototypes: [Multiverse WeKan Roadmap](FAQ/WeKan-Multiverse-Roadmap.md)
 * [Change Language](Translations/Change-Language.md)
 * [Forgot Password](Login/Forgot-Password.md)
-* [Test Edge](DeveloperDocs/Test-Edge.md)
-* [WeKan Design Principles](DeveloperDocs/Design-Principles.md)
+* [WeKan Design Principles](Design/Design-Principles.md)
 * [FAQ](FAQ/FAQ.md)
 * [IRC FAQ](FAQ/IRC-FAQ.md) - answers to questions asked at IRC
 * [Team](FAQ/Team.md)
@@ -45,7 +48,6 @@ If you still have questions, check out the [[FAQ]]!
 
 * [Allow private boards only: Disable Public Boards](Features/Allow-private-boards-only.md)
 * [Security Disclosure and details of Security in Wekan](../SECURITY.md)
-* [Security issues](https://github.com/wekan/wekan/issues?q=is%3Aissue+is%3Aopen+label%3ASecurity)
 * [Password Hashing](Login/Password-Hashing.md)
 
 # <a name="Scaling"></a>Scaling
@@ -54,27 +56,23 @@ If you still have questions, check out the [[FAQ]]!
 * [Maybe: Add more RAM to Node.js to prevent crash](https://github.com/wekan/wekan/issues/3585)
 * [Clustering AWS etc](Platforms/Propietary/Cloud/AWS.md)
 * [Scaling](Webserver/Scaling.md)
-* [Kubernetes](https://github.com/wekan/wekan/tree/main/helm/wekan)
+* Kubernetes
+  * Helm Chart https://artifacthub.io/packages/helm/wekan/wekan
+  * Issues https://github.com/wekan/charts/issues
+  * Pull Requests https://github.com/wekan/charts/pulls
 * [Redis Oplog](https://github.com/cult-of-coders/redis-oplog)
-* [Meteor Scaling](https://galaxy-guide.meteor.com/scaling.html) at [Meteor Cloud](https://meteor.com/cloud)
 * [Scaling at Meteor forums](https://forums.meteor.com/t/meteor-scaling-performance-best-practices/52886/16)
 
 # <a name="Migrating"></a>Migrating
 
 * [From Previous Export, paste big WeKan JSON](ImportExport/From-Previous-Export.md)
 * [Progress: Import/Export/Sync](ImportExport/Sync.md)
-* [From CSV/TSV](ImportExport/CSV.md)
+* [From CSV/TSV](ImportExport/CSV/CSV.md)
 * [From Trello](ImportExport/trello/Migrating-from-Trello.md)
 * [From Jira](ImportExport/Jira.md)
-* [From Asana](ImportExport/Asana.md)
+* [From Asana](ImportExport/asana/Asana.md)
 * [From Zenkit](ImportExport/ZenKit.md)
 * [From old Wekan manually](ImportExport/Migrating-from-old-Wekan-manually.md)
-
-# <a name="Support"></a>Support priorities for new features and bugfixes
-
-1) [Commercial Support](https://wekan.fi/commercial-support/)
-2) [Community Support](https://github.com/wekan/wekan/issues)
-3) [Debugging](DeveloperDocs/Debugging.md)
 
 # Backup
 
@@ -112,9 +110,9 @@ If you still have questions, check out the [[FAQ]]!
 * [Accounts Lockout: Brute force login protection](Login/Accounts-Lockout.md)
 * [LDAP](Login/LDAP.md)
 * [LDAP AD Simple Auth](Login/LDAP-AD-Simple-Auth.md)
-* [Keycloak](Login/Keycloak.md)
+* [Keycloak](Login/Keycloak/Keycloak.md)
 * [Google login](Login/Google-login.md)
-* [Azure](Login/Azure.md)
+* [Azure](Login/Azure/Azure.md)
 * [OAuth2](Login/OAuth2.md), Auth0, GitLab, RocketChat
 * [Oracle OIM on premise using OAuth2](Login/Oracle-OIM.md)
 * [ADFS 4.0 using OAuth2 and OpenID](Login/ADFS.md)
@@ -156,19 +154,18 @@ If you still have questions, check out the [[FAQ]]!
 * [Translations](Translations/Translations.md)
 * [Customize Translations](Customize-Translations.md)
 * [Default Language for All Users](https://github.com/wekan/wekan/issues/3927)
-* [Roadmap](FAQ/Roadmap.md)
 * [Features](Features/Features.md)
 * [Planning Poker](Features/Planning-Poker.md)
 * [Scaling](Webserver/Scaling.md)
 * [Custom Logo](Features/Custom-Logo.md)
 * [Subtasks](Features/Subtasks.md)
 * [Templates](Features/Templates.md)
-* [Cover](Features/Cover.md)
+* [Card Cover Image](Features/Cover.md)
 * [Archive and Delete](Features/Archive-and-Delete.md)
 * [Custom Fields](Features/Custom-Fields.md)
 * [Fix Export board menu not visible on some boards](https://github.com/wekan/wekan/issues/1060)
 * [RAM usage](https://github.com/wekan/wekan/issues/1088#issuecomment-311843230)
-* [Swimlanes Documentation](Features/Swimlanes.md)
+* [Swimlanes](Features/Swimlanes.md)
 
 # <a name="Email"></a>Email
 
@@ -179,11 +176,6 @@ If you still have questions, check out the [[FAQ]]!
 * [Requirements](FAQ/Requirements.md)
 * [Ports, hostsfile, how Internet works](https://gitub.com/wekan/wekan/issues/2896)
 * [ROOT_URL Settings](Webserver/Settings.md)
-
-# <a name="Platforms"></a>Download
-
-* [Download Wekan for various Platforms](Platforms/FOSS/Platforms.md): Supported by xet7, Operating Systems, NAS, Cloud
-* [Helm Chart for Kubernetes](Platforms/FOSS/Helm.md)
 
 # <a name="Webservers"></a>Webservers
 
@@ -198,6 +190,16 @@ If you still have questions, check out the [[FAQ]]!
 
 # <a name="API"></a>REST API Docs
 
+* API docs https://wekan.fi/docs/
+* PHP Webhook receiver to WeKan API Python https://github.com/wekan/webhook/blob/main/public/index.php#L46
+* API clients
+  * Python
+    * https://github.com/wekan/wekan/blob/main/api.py
+    * https://github.com/wekan/wekan-python-api-client
+    * https://github.com/wekan/python-wekan
+    * Other Python features https://github.com/wekan/wekan/blob/main/docs/Features/Python.md
+  * Go https://github.com/wekan/wego
+* Other API 
 * [REST API Code](API/Code.md)
 * [Login](API/REST-API.md)
 * [User](API/User.md)
@@ -224,7 +226,10 @@ If you still have questions, check out the [[FAQ]]!
 
 # <a name="Webhooks"></a>Webhooks
 
+* Per-board events sending at board right sidebar / Board Settings / Webhooks
+  * Check that webhook immediately responds with HTTP 200 OK, otherwise WeKan slows down
 * [Global Webhook](https://github.com/wekan/wekan/pull/2665)
+* PHP Webhook receiver to WeKan API Python https://github.com/wekan/webhook/blob/main/public/index.php#L46
 * [Limiting Webhook data](https://github.com/wekan/wekan/issues/2830)
 * [Receiving Webhooks](Webhooks/Receiving-Webhooks)
 * [Java Webhooks](Webhooks/Java.md)
@@ -240,11 +245,9 @@ If you still have questions, check out the [[FAQ]]!
 * [Kadira integration](https://github.com/wekan/wekan/issues/2152)
 * [Debugging](DeveloperDocs/Debugging.md)
 * [Developer Docs for Standalone Wekan](DeveloperDocs/Developer-Documentation.md)
-* [Developer Docs for Sandstorm Wekan](https://github.com/wekan/wekan-maintainer/wiki/Developing-Wekan-for-Sandstorm)
-* [Adding new Snap setting to code](Adding-new-Snap-settings-to-code)
-* [Directory Structure](Directory-Structure)
-* [Building Wekan for Sandstorm](https://github.com/wekan/wekan-maintainer/wiki/Building-Wekan-for-Sandstorm)
-* [Docs - Sandstorm etc](https://github.com/wekan/wekan/labels/Documentation)
+* [Developer Docs for Sandstorm Wekan](https://github.com/wekan/wekan/tree/main/docs/Platforms/FOSS/Sandstorm)
+* [Adding new Snap setting to code](DeveloperDocs/Adding-new-Snap-settings-to-code.md)
+* [Directory Structure](DeveloperDocs/Directory-Structure.md)
 * [Beginner](https://github.com/wekan/wekan/labels/Beginner)
 * [Maintainer FAQ](https://github.com/wekan/wekan-maintainer/wiki/FAQ)
 

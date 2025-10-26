@@ -1,5 +1,24 @@
 import { ReactiveCache, ReactiveMiniMongoIndex } from '/imports/reactiveCache';
-import moment from 'moment/min/moment-with-locales';
+import { 
+  formatDateTime, 
+  formatDate, 
+  formatTime, 
+  getISOWeek, 
+  isValidDate, 
+  isBefore, 
+  isAfter, 
+  isSame, 
+  add, 
+  subtract, 
+  startOf, 
+  endOf, 
+  format, 
+  parseDate, 
+  now, 
+  createDate, 
+  fromNow, 
+  calendar 
+} from '/imports/lib/dateUtils';
 import {
   ALLOWED_COLORS,
   TYPE_CARD,
@@ -8,6 +27,7 @@ import {
 } from '../config/const';
 import Attachments, { fileStoreStrategyFactory } from "./attachments";
 import { copyFile } from './lib/fileStoreStrategy.js';
+import PositionHistory from './positionHistory';
 
 Cards = new Mongo.Collection('cards');
 
@@ -483,6 +503,14 @@ Cards.attachSchema(
        */
       type: Boolean,
       optional: true,
+    },
+    showListOnMinicard: {
+      /**
+       * show list name on minicard?
+       */
+      type: Boolean,
+      optional: true,
+      defaultValue: false,
     },
   }),
 );
@@ -1483,8 +1511,8 @@ Cards.helpers({
   expiredVote() {
     let end = this.getVoteEnd();
     if (end) {
-      end = moment(end);
-      return end.isBefore(new Date());
+      end = new Date(end);
+      return isBefore(end, new Date());
     }
     return false;
   },
@@ -1577,8 +1605,8 @@ Cards.helpers({
   expiredPoker() {
     let end = this.getPokerEnd();
     if (end) {
-      end = moment(end);
-      return end.isBefore(new Date());
+      end = new Date(end);
+      return isBefore(end, new Date());
     }
     return false;
   },
@@ -1756,10 +1784,20 @@ Cards.helpers({
   },
 
   setTitle(title) {
+    // Basic client-side validation - server will handle full sanitization
+    let sanitizedTitle = title;
+    if (typeof title === 'string') {
+      // Basic length check to prevent abuse
+      sanitizedTitle = title.length > 1000 ? title.substring(0, 1000) : title;
+      if (process.env.DEBUG === 'true' && sanitizedTitle !== title) {
+        console.warn('Client-side sanitized card title:', title, '->', sanitizedTitle);
+      }
+    }
+
     if (this.isLinkedBoard()) {
-      return Boards.update({ _id: this.linkedId }, { $set: { title } });
+      return Boards.update({ _id: this.linkedId }, { $set: { title: sanitizedTitle } });
     } else {
-      return Cards.update({ _id: this.getRealId() }, { $set: { title } });
+      return Cards.update({ _id: this.getRealId() }, { $set: { title: sanitizedTitle } });
     }
   },
 
@@ -3121,6 +3159,14 @@ if (Meteor.isServer) {
 
   Cards.after.insert((userId, doc) => {
     cardCreation(userId, doc);
+
+    // Track original position for new cards
+    Meteor.setTimeout(() => {
+      const card = Cards.findOne(doc._id);
+      if (card) {
+        card.trackOriginalPosition();
+      }
+    }, 100);
   });
   // New activity for card (un)archivage
   Cards.after.update((userId, doc, fieldNames) => {
@@ -3174,9 +3220,7 @@ if (Meteor.isServer) {
         // change list modifiedAt, when user modified the key values in
         // timingaction array, if it's endAt, put the modifiedAt of list
         // back to one year ago for sorting purpose
-        const modifiedAt = moment()
-          .subtract(1, 'year')
-          .toISOString();
+        const modifiedAt = add(now(), -1, 'year').toISOString();
         const boardId = list.boardId;
         Lists.direct.update(
           {
@@ -3300,6 +3344,27 @@ if (Meteor.isServer) {
       }),
     });
   });
+
+  /**
+   * @operation get_card_by_id
+   * @summary Get a Card by Card ID
+   *
+   * @param {string} cardId the card ID
+   * @return_type Cards
+   */
+  JsonRoutes.add(
+    'GET',
+    '/api/cards/:cardId',
+    function(req, res) {
+      const paramCardId = req.params.cardId;
+      card = ReactiveCache.getCard(paramCardId)
+      Authentication.checkBoardAccess(req.userId, card.boardId);
+      JsonRoutes.sendResult(res, {
+        code: 200,
+        data: card,
+      });
+    },
+  );
 
   /**
    * @operation get_card
@@ -3544,7 +3609,13 @@ JsonRoutes.add('GET', '/api/boards/:boardId/cards_count', function(
       Authentication.checkBoardAccess(req.userId, paramBoardId);
 
       if (req.body.title) {
-        const newTitle = req.body.title;
+        // Basic client-side validation - server will handle full sanitization
+        const newTitle = req.body.title.length > 1000 ? req.body.title.substring(0, 1000) : req.body.title;
+
+        if (process.env.DEBUG === 'true' && newTitle !== req.body.title) {
+          console.warn('Sanitized card title input:', req.body.title, '->', newTitle);
+        }
+
         Cards.direct.update(
           {
             _id: paramCardId,
@@ -4042,7 +4113,7 @@ JsonRoutes.add('GET', '/api/boards/:boardId/cards_count', function(
   * @param {string} cardId the ID of the card
   * @param {string} customFieldId the ID of the custom field
   * @param {string} value the new custom field value
-  * @return_type {_id: string, customFields: object}
+  * @return_type {_id: string, customFields: [{_id: string, value: object}]}
   */
   JsonRoutes.add(
     'POST',
@@ -4092,5 +4163,78 @@ JsonRoutes.add('GET', '/api/boards/:boardId/cards_count', function(
     },
   );
 }
+
+// Position history tracking methods
+Cards.helpers({
+  /**
+   * Track the original position of this card
+   */
+  trackOriginalPosition() {
+    const existingHistory = PositionHistory.findOne({
+      boardId: this.boardId,
+      entityType: 'card',
+      entityId: this._id,
+    });
+
+    if (!existingHistory) {
+      PositionHistory.insert({
+        boardId: this.boardId,
+        entityType: 'card',
+        entityId: this._id,
+        originalPosition: {
+          sort: this.sort,
+          title: this.title,
+        },
+        originalSwimlaneId: this.swimlaneId || null,
+        originalListId: this.listId || null,
+        originalTitle: this.title,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  },
+
+  /**
+   * Get the original position history for this card
+   */
+  getOriginalPosition() {
+    return PositionHistory.findOne({
+      boardId: this.boardId,
+      entityType: 'card',
+      entityId: this._id,
+    });
+  },
+
+  /**
+   * Check if this card has moved from its original position
+   */
+  hasMovedFromOriginalPosition() {
+    const history = this.getOriginalPosition();
+    if (!history) return false;
+    
+    const currentSwimlaneId = this.swimlaneId || null;
+    const currentListId = this.listId || null;
+    
+    return history.originalPosition.sort !== this.sort ||
+           history.originalSwimlaneId !== currentSwimlaneId ||
+           history.originalListId !== currentListId;
+  },
+
+  /**
+   * Get a description of the original position
+   */
+  getOriginalPositionDescription() {
+    const history = this.getOriginalPosition();
+    if (!history) return 'No original position data';
+    
+    const swimlaneInfo = history.originalSwimlaneId ? 
+      ` in swimlane ${history.originalSwimlaneId}` : 
+      ' in default swimlane';
+    const listInfo = history.originalListId ? 
+      ` in list ${history.originalListId}` : 
+      '';
+    return `Original position: ${history.originalPosition.sort || 0}${swimlaneInfo}${listInfo}`;
+  },
+});
 
 export default Cards;

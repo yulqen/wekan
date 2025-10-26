@@ -79,7 +79,6 @@ BlazeComponent.extendComponent({
       autosize($textarea);
       $textarea.escapeableTextComplete(mentions);
     };
-/*
     if (Meteor.settings.public.RICHER_CARD_COMMENT_EDITOR === true || Meteor.settings.public.RICHER_CARD_COMMENT_EDITOR === 'true') {
       const isSmall = Utils.isMiniScreen();
       const toolbar = isSmall
@@ -117,7 +116,7 @@ BlazeComponent.extendComponent({
         ].join('|');
         const badPatterns = new RegExp(
           `(?:${[
-            `<(${badTags})s*[^>][\\s\\S]*?<\\/\\1>`,
+            `<(${badTags})\\s*[^>][\\s\\S]*?<\\/\\1>`,
             `<(${badTags})[^>]*?\\/>`,
           ].join('|')})`,
           'gi',
@@ -128,9 +127,9 @@ BlazeComponent.extendComponent({
         // remove attributes ' style="..."'
         const badAttributes = new RegExp(
           `(?:${[
-            'on\\S+=([\'"]?).*?\\1',
-            'href=([\'"]?)javascript:.*?\\2',
-            'style=([\'"]?).*?\\3',
+            'on\\S+=([\'\"]?).*?\\1',
+            'href=([\'\"]?)javascript:.*?\\2',
+            'style=([\'\"]?).*?\\3',
             'target=\\S+',
           ].join('|')})`,
           'gi',
@@ -300,7 +299,6 @@ BlazeComponent.extendComponent({
     } else {
       enableTextarea();
     }
-*/
     enableTextarea();
   },
   events() {
@@ -327,6 +325,7 @@ BlazeComponent.extendComponent({
 }).register('editor');
 
 import DOMPurify from 'dompurify';
+import { sanitizeHTML } from '/imports/lib/secureDOMPurify';
 
 // Additional  safeAttrValue function to allow for other specific protocols
 // See https://github.com/leizongmin/js-xss/issues/52#issuecomment-241354114
@@ -373,9 +372,7 @@ Blaze.Template.registerHelper(
     let content = Blaze.toHTML(view.templateContentBlock);
     const currentBoard = Utils.getCurrentBoard();
     if (!currentBoard)
-      return HTML.Raw(
-        DOMPurify.sanitize(content, { ALLOW_UNKNOWN_PROTOCOLS: true }),
-      );
+      return HTML.Raw(sanitizeHTML(content));
     const knowedUsers = _.union(currentBoard.members.map(member => {
       const u = ReactiveCache.getUser(member.userId);
       if (u) {
@@ -419,9 +416,7 @@ Blaze.Template.registerHelper(
       content = content.replace(fullMention, Blaze.toHTML(link));
     }
 
-    return HTML.Raw(
-      DOMPurify.sanitize(content, { ALLOW_UNKNOWN_PROTOCOLS: true }),
-    );
+    return HTML.Raw(sanitizeHTML(content));
   }),
 );
 
